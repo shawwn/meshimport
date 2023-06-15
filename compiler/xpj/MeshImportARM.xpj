@@ -1,0 +1,168 @@
+<XPJ version="4">
+
+	<Project name="MeshImportARM" version="1">
+		<Export platform="win32" tool="vc9">../vc9win32</Export>
+		<Export platform="win32" tool="vc8">../vc8win32</Export>
+		<Export platform="win32" tool="vc7">../vc7win32</Export>
+
+		<Export platform="win64" tool="vc9">../vc9win64</Export>
+		<Export platform="win64" tool="vc8">../vc8win64</Export>
+		<Export platform="win64" tool="vc7">../vc7win64</Export>
+
+
+		<Target name="MeshImportARM">
+			<Export platform="win32" tool="vc9">../vc9win32</Export>
+			<Export platform="win32" tool="vc8">../vc8win32</Export>
+			<Export platform="win32" tool="vc7">../vc7win32</Export>
+
+			<Export platform="win64" tool="vc9">../vc9win64</Export>
+			<Export platform="win64" tool="vc8">../vc8win64</Export>
+			<Export platform="win64" tool="vc7">../vc7win64</Export>
+
+			<Configuration name="default" type="dll">
+				<Preprocessor type="define">
+					WIN32
+					_WINDOWS
+					UNICODE=1
+					_UNICODE=1
+          MESHIMPORTARM_EXPORTS
+				</Preprocessor>
+				<Files name="Source Files" root="../../src/MeshImportARM" type="source">
+					*.cpp
+					*.c
+				</Files>
+
+				<Files name="foundation" root="../../src/MeshImportARM/foundation" type="source">
+					*.h
+					windows/*.h
+				</Files>
+
+				<Files name="reviewed" root="../../src/MeshImportARM/reviewed" type="source">
+					include/ *.h
+					include/windows/*.h
+					src/*.cpp
+					src/*.h
+					src/windows/*.h
+					src/windows/*.cpp
+				</Files>
+
+				<Files name="general" root="../../src/MeshImportARM/general" type="source">
+					PxIOStream/include/*.h
+					PxIOStream/include/*.inl
+					PxIOStream/public/*.h
+					shared/include/*.h
+					string_parsing/include/*.h
+					string_parsing/src/*.cpp
+				</Files>
+
+				<Files name="NxParameterized" root="../../src/MeshImportARM/NxParameterized" type="source">
+					include/*.inl
+					include/*.h
+					public/*.inl
+					public/*.h
+					src/*.cpp
+					src/*.h
+				</Files>
+
+				<Files name="params" root="../../src/MeshImportARM/params" type="source">
+					*.cpp
+					*.h
+				</Files>
+
+
+				<Files name="Header Files" root="../../src/MeshImportARM" type="header">
+					*.h
+				</Files>
+				<Files name="Public Header Files" root="../../include/MeshImportARM" type="header">
+					*.h
+				</Files>
+				<Files name="Plugin Header Files" root="../../include" type="header">
+          			MeshImport/*.h
+				</Files>
+				<Files name="Common Include-Binding Files" root="../../include/common" type="header">
+          			snippets/nvstl.cpp
+			        snippets/UserMemAlloc.h
+          			snippets/Nx*.h
+				</Files>
+				<SearchPaths type="header">
+                 ../../include/common/snippets
+                 ../../include/MeshImport
+                 ../../include
+                 ../../src/MeshImportARM/foundation
+                 ../../src/MeshImportARM/foundation/windows
+                 ../../src/MeshImportARM/reviewed/include
+                 ../../src/MeshImportARM/reviewed/include/windows
+                 ../../src/MeshImportARM/general/PxIOStream/include
+                 ../../src/MeshImportARM/general/string_parsing/include
+                 ../../src/MeshImportARM/general/PxIOStream/public
+                 ../../src/MeshImportARM/general/shared/include
+                 ../../src/MeshImportARM/NxParameterized/include
+                 ../../src/MeshImportARM/NxParameterized/public
+                 ../../src/MeshImportARM/params
+				</SearchPaths>
+				<SearchPaths type="library">
+         		../../lib/win32
+				</SearchPaths>
+				<Dependencies>
+				</Dependencies>
+				<Libraries>
+				</Libraries>
+ 				<LFlags tool="vc8">/NODEFAULTLIB:libcp.lib</LFlags>
+			</Configuration>
+
+			<Configuration name="debug" platform="win32">
+				<OutFile>MeshImportARM_x86.dll</OutFile>
+				<OutDir>../../bin/win32</OutDir>
+				<ImpDir>../../lib/win32</ImpDir>
+				<CFlags>/WX /W4 /fp:fast /MDd /Zi</CFlags>
+				<LFlags>/DEBUG</LFlags>
+				<Preprocessor type="define">
+					_DEBUG
+				</Preprocessor>
+				<Libraries>
+				</Libraries>
+			</Configuration>
+
+			<Configuration name="release" platform="win32">
+				<OutFile>MeshImportARM_x86.dll</OutFile>
+				<OutDir>../../bin/win32</OutDir>
+				<ImpDir>../../lib/win32</ImpDir>
+				<CFlags>/Zi /WX /W4 /fp:fast /WX /MD /O2</CFlags>
+				<LFlags>/DEBUG</LFlags>
+				<Preprocessor type="define">
+					NDEBUG
+				</Preprocessor>
+				<Libraries>
+				</Libraries>
+			</Configuration>
+
+			<Configuration name="debug" platform="win64">
+				<OutFile>MeshImportARM_x64.dll</OutFile>
+				<OutDir>../../bin/win64</OutDir>
+				<ImpDir>../../lib/win64</ImpDir>
+				<CFlags>/WX /W4 /fp:fast /MDd /Zi</CFlags>
+				<LFlags>/DEBUG</LFlags>
+				<Preprocessor type="define">
+					_DEBUG
+				</Preprocessor>
+				<Libraries>
+				</Libraries>
+			</Configuration>
+
+			<Configuration name="release" platform="win64">
+				<OutFile>MeshImportARM_x64.dll</OutFile>
+				<OutDir>../../bin/win64</OutDir>
+				<ImpDir>../../lib/win64</ImpDir>
+				<CFlags>/Zi /WX /W4 /fp:fast /WX /MD /O2</CFlags>
+				<LFlags>/DEBUG</LFlags>
+				<Preprocessor type="define">
+					NDEBUG
+				</Preprocessor>
+				<Libraries>
+				</Libraries>
+			</Configuration>
+
+		</Target>
+	</Project>
+
+</XPJ>
