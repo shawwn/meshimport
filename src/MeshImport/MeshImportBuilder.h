@@ -14,7 +14,8 @@ class MeshBuilder : public MeshSystem, public MeshImportInterface
 {
 public:
   virtual void gather(void) = 0;
-  virtual void scale(NxF32 s) = 0;
+  void scale(NxF32 s) { scale(s,s,s); }
+  virtual void scale(NxF32 scaleX,NxF32 scaleY,NxF32 scaleZ) = 0;
   virtual void rotate(NxF32 rotX,NxF32 rotY,NxF32 rotZ) = 0;
 
 

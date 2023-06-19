@@ -209,19 +209,19 @@ public:
     releaseKeyValueIni(mINI);
   }
 
-  VertexIndex *            createVertexIndex(NxF32 granularity)  // create an indexed vertext system for floats
+  virtual VertexIndex *    createVertexIndex(NxF32 granularity) override  // create an indexed vertext system for floats
   {
     LocalVertexIndex *m = MEMALLOC_NEW(LocalVertexIndex)(granularity);
     return static_cast< VertexIndex *>(m);
   }
 
-  void                     releaseVertexIndex(VertexIndex *vindex)
+  virtual void             releaseVertexIndex(VertexIndex *vindex) override
   {
     LocalVertexIndex *m = static_cast< LocalVertexIndex *>(vindex);
     delete m;
   }
 
-  virtual MeshImporter *   locateMeshImporter(const char *fname) // based on this file name, find a matching mesh importer.
+  virtual MeshImporter *   locateMeshImporter(const char *fname) override // based on this file name, find a matching mesh importer.
   {
     MeshImporter *ret = 0;
 
@@ -250,7 +250,7 @@ public:
     return ret;
   }
 
-  virtual void addImporter(MeshImporter *importer)  // add an additional importer
+  virtual void addImporter(MeshImporter *importer) override  // add an additional importer
   {
     if ( importer )
     {
@@ -262,7 +262,7 @@ public:
     }
   }
 
-  bool importMesh(const char *meshName,const void *data,NxU32 dlen,MeshImportInterface *callback,const char *options)
+  bool importMesh(const char *meshName,const void *data,NxU32 dlen,MeshImportInterface *callback,const char *options) override
   {
     bool ret = false;
 
@@ -275,13 +275,13 @@ public:
     return ret;
   }
 
-  virtual MeshSystem * getMeshSystem(MeshSystemContainer *_b)
+  virtual MeshSystem * getMeshSystem(MeshSystemContainer *_b) override
   {
     MeshBuilder *b = (MeshBuilder *)_b;
     return static_cast< MeshSystem *>(b);
   }
 
-  virtual MeshSystemContainer *     createMeshSystemContainer(void)
+  virtual MeshSystemContainer *     createMeshSystemContainer(void) override
   {
     MeshSystemContainer *ret = 0;
 
@@ -294,7 +294,7 @@ public:
     return ret;
   }
 
-  virtual MeshSystemContainer *     createMeshSystemContainer(const char *meshName,const void *data,NxU32 dlen,const char *options) // imports and converts to a single MeshSystem data structure
+  virtual MeshSystemContainer *     createMeshSystemContainer(const char *meshName,const void *data,NxU32 dlen,const char *options) override // imports and converts to a single MeshSystem data structure
   {
     MeshSystemContainer *ret = 0;
 
@@ -311,18 +311,18 @@ public:
     return ret;
   }
 
-  virtual void  releaseMeshSystemContainer(MeshSystemContainer *mesh)
+  virtual void  releaseMeshSystemContainer(MeshSystemContainer *mesh) override
   {
     MeshBuilder *b = (MeshBuilder *)mesh;
     releaseMeshBuilder(b);
   }
 
-  virtual NxI32              getImporterCount(void)
+  virtual NxI32              getImporterCount(void) override
   {
     return (NxI32)mImporters.size();
   }
 
-  virtual MeshImporter    *getImporter(NxI32 index)
+  virtual MeshImporter    *getImporter(NxI32 index) override
   {
     MeshImporter *ret = 0;
     assert( index >=0 && index < (NxI32)mImporters.size() );
@@ -2021,7 +2021,7 @@ public:
     }
   }
 
-  virtual bool serializeMeshSystem(MeshSystem *mesh,MeshSerialize &data)
+  virtual bool serializeMeshSystem(MeshSystem *mesh,MeshSerialize &data) override
   {
     bool ret = false;
 
@@ -2109,7 +2109,7 @@ public:
     return ret;
   }
 
-  virtual  void             releaseSerializeMemory(MeshSerialize &data)
+  virtual  void             releaseSerializeMemory(MeshSerialize &data) override
   {
     MEMALLOC_FREE(data.mBaseData);
     MEMALLOC_FREE(data.mExtendedData);
@@ -2120,7 +2120,7 @@ public:
   }
 
 
-  virtual const char   *    getFileRequestDialogString(void)
+  virtual const char   *    getFileRequestDialogString(void) override
   {
     typedef std::vector< std::string > StringVector;
     StringVector descriptions;
@@ -2174,12 +2174,12 @@ public:
     return mFileRequest.c_str();
   }
 
-  virtual void             setMeshImportApplicationResource(MeshImportApplicationResource *resource)
+  virtual void             setMeshImportApplicationResource(MeshImportApplicationResource *resource) override
   {
     mApplicationResource = resource;
   }
 
-  virtual MeshSkeletonInstance *createMeshSkeletonInstance(const MeshSkeleton &sk)
+  virtual MeshSkeletonInstance *createMeshSkeletonInstance(const MeshSkeleton &sk) override
   {
     MeshSkeletonInstance *ret = 0;
 
@@ -2228,7 +2228,7 @@ public:
 	  }
   }
 
-  virtual  void  releaseMeshSkeletonInstance(MeshSkeletonInstance *sk)
+  virtual  void  releaseMeshSkeletonInstance(MeshSkeletonInstance *sk) override
   {
     if ( sk )
     {
@@ -2237,7 +2237,7 @@ public:
     }
   }
 
-  virtual bool  sampleAnimationTrack(NxI32 trackIndex,const MeshSystem *msystem,MeshSkeletonInstance *skeleton)
+  virtual bool  sampleAnimationTrack(NxI32 trackIndex,const MeshSystem *msystem,MeshSkeletonInstance *skeleton) override
   {
     bool ret = false;
 
@@ -2386,7 +2386,7 @@ public:
   virtual void transformVertices(NxU32 vcount,
                                  const MeshVertex *source_vertices,
                                  MeshVertex *dest_vertices,
-                                 MeshSkeletonInstance *skeleton)
+                                 MeshSkeletonInstance *skeleton) override
   {
     for (NxU32 i=0; i<vcount; i++)
     {
@@ -2396,7 +2396,7 @@ public:
     }
   }
 
-  virtual void rotate(MeshSystemContainer *msc,NxF32 rotX,NxF32 rotY,NxF32 rotZ)  // rotate mesh system using these euler angles expressed as degrees.
+  virtual void rotate(MeshSystemContainer *msc,NxF32 rotX,NxF32 rotY,NxF32 rotZ) override  // rotate mesh system using these euler angles expressed as degrees.
   {
     MeshBuilder *b = (MeshBuilder *)msc;
     if ( b )
@@ -2405,16 +2405,16 @@ public:
     }
   }
 
-  virtual void scale(MeshSystemContainer *msc,NxF32 s)
+  virtual void scale(MeshSystemContainer *msc,NxF32 scaleX,NxF32 scaleY,NxF32 scaleZ) override
   {
     MeshBuilder *b = (MeshBuilder *)msc;
     if ( b )
     {
-      b->scale(s);
+      b->scale(scaleX,scaleY,scaleZ);
     }
   }
 
-  virtual MeshImportInterface * getMeshImportInterface(MeshSystemContainer *msc)
+  virtual MeshImportInterface * getMeshImportInterface(MeshSystemContainer *msc) override
   {
     MeshImportInterface *ret = 0;
 
@@ -2426,7 +2426,7 @@ public:
     return ret;
   }
 
-  virtual void gather(MeshSystemContainer *msc)
+  virtual void gather(MeshSystemContainer *msc) override
   {
     if ( msc )
     {

@@ -57,13 +57,13 @@ void MeshImportFBX::Release(void)
 
 	if (m_scene != NULL)
 	{
-		m_scene->Destroy(true, true); 
+		m_scene->Destroy(true);
 		m_scene = NULL;
 	}
 
 	if (m_importer != NULL)
 	{
-		m_importer->Destroy(true, true);
+		m_importer->Destroy(true);
 		m_importer = NULL;
 	}
 
@@ -136,10 +136,10 @@ bool MeshImportFBX::Import( const char* filename, NVSHARE::MeshImportInterface *
 	message[OUTPUT_TEXT_BUFFER_SIZE] = '\0';
 	
     const char* localName = getFileName( filename );
-	KString fileName = KString( filename );
-	KString filePath = fileName.Left( localName - filename );
+	FbxString fileName = FbxString( filename );
+	FbxString filePath = fileName.Left( localName - filename );
 
-	m_sdkManager = KFbxSdkManager::Create();
+	m_sdkManager = FbxManager::Create();
 
 	if(m_sdkManager == NULL)
 		return false;
@@ -152,35 +152,35 @@ bool MeshImportFBX::Import( const char* filename, NVSHARE::MeshImportInterface *
     //m_sdkManager->GetIOPluginRegistry()->RegisterReader( CreateFBXImporterReader, GetFBXImporterReaderInfo,
     //             pluginId, registeredCount, FillFBXImporterReaderIOSettings );
 
-    m_importer = KFbxImporter::Create( m_sdkManager, "" );
-	if( !m_sdkManager->GetIOPluginRegistry()->DetectFileFormat( filename, fileFormat ) )
+    m_importer = FbxImporter::Create( m_sdkManager, "" );
+	if( !m_sdkManager->GetIOPluginRegistry()->DetectReaderFileFormat( filename, fileFormat ) )
     {
-        // Unrecognizable file format. Try to fall back to KFbxImporter::eFBX_BINARY
+        // Unrecognizable file format. Try to fall back to FbxImporter::eFBX_BINARY
         fileFormat = m_sdkManager->GetIOPluginRegistry()->FindReaderIDByDescription( "FBX binary (*.fbx)" );;
     }
 
-    m_importer->SetFileFormat( fileFormat );
-
-
     // Initialize the importer by providing a filename.
-    if( !m_importer->Initialize( filename ) )
+    if( !m_importer->Initialize( filename, fileFormat ) )
 		return false;
 
     // Create the scene.
-    m_scene = KFbxScene::Create( m_sdkManager, "" );
+    m_scene = FbxScene::Create( m_sdkManager, "" );
+
+    FbxIOSettings* ioSettings = FbxIOSettings::Create(m_sdkManager, IOSROOT);
 
 
     if (m_importer->IsFBX())
     {
         // Set the import states. By default, the import states are always set to 
         // true. The code below shows how to change these states.
-        IOSREF.SetBoolProp(IMP_FBX_MATERIAL,        true);
-        IOSREF.SetBoolProp(IMP_FBX_TEXTURE,         true);
-        IOSREF.SetBoolProp(IMP_FBX_LINK,            true);
-        IOSREF.SetBoolProp(IMP_FBX_SHAPE,           true);
-        IOSREF.SetBoolProp(IMP_FBX_GOBO,            true);
-        IOSREF.SetBoolProp(IMP_FBX_ANIMATION,       true);
-        IOSREF.SetBoolProp(IMP_FBX_GLOBAL_SETTINGS, true);
+        ioSettings->SetBoolProp(IMP_FBX_MATERIAL,        true);
+        ioSettings->SetBoolProp(IMP_FBX_TEXTURE,         true);
+        ioSettings->SetBoolProp(IMP_FBX_LINK,            true);
+        ioSettings->SetBoolProp(IMP_FBX_SHAPE,           true);
+        ioSettings->SetBoolProp(IMP_FBX_GOBO,            true);
+        ioSettings->SetBoolProp(IMP_FBX_ANIMATION,       true);
+        ioSettings->SetBoolProp(IMP_FBX_GLOBAL_SETTINGS, true);
+        ioSettings->SetBoolProp(EXP_FBX_EXPORT_FILE_VERSION, FBX_FILE_VERSION_7400);
     }
 
 
@@ -191,19 +191,19 @@ bool MeshImportFBX::Import( const char* filename, NVSHARE::MeshImportInterface *
 		return false;
 
 	//// Convert Axis System to what is used in this example, if needed
-	//KFbxAxisSystem sceneAxisSystem = m_scene->GetGlobalSettings().GetAxisSystem();
-	//KFbxAxisSystem ourAxisSystem(sceneAxisSystem.KFbxAxisSystem::ZAxis, KFbxAxisSystem::ParityOdd, KFbxAxisSystem::LeftHanded);
+	//FbxAxisSystem sceneAxisSystem = m_scene->GetGlobalSettings().GetAxisSystem();
+	//FbxAxisSystem ourAxisSystem(sceneAxisSystem.FbxAxisSystem::ZAxis, FbxAxisSystem::ParityOdd, FbxAxisSystem::LeftHanded);
 	//if( sceneAxisSystem != ourAxisSystem )
 	//{
 	//     ourAxisSystem.ConvertScene(m_scene);
 	//}
 
 	//// Convert Unit System to what is used in this example, if needed
-	//KFbxSystemUnit sceneSystemUnit = m_scene->GetGlobalSettings().GetSystemUnit();
+	//FbxSystemUnit sceneSystemUnit = m_scene->GetGlobalSettings().GetSystemUnit();
 	//if( sceneSystemUnit.GetScaleFactor() != 1.0 )
 	//{
 	//	
-	//    KFbxSystemUnit ourSystemUnit(1.0);
+	//    FbxSystemUnit ourSystemUnit(1.0);
 	//	ourSystemUnit.ConvertScene(m_scene);
 	//	
 	//}
@@ -216,7 +216,7 @@ bool MeshImportFBX::Import( const char* filename, NVSHARE::MeshImportInterface *
 	m_takeInfo = NULL;
 	m_takeNameArray.Clear();
 
-    int takeCount = m_importer->GetTakeCount();
+    int takeCount = m_importer->GetAnimStackCount();
 	int tSelected = -1;
 
 	for(int t = 0; t < takeCount; t++ )
@@ -233,7 +233,7 @@ bool MeshImportFBX::Import( const char* filename, NVSHARE::MeshImportInterface *
 	{
 		m_takeInfo = m_importer->GetTakeInfo(tSelected);
 		m_takeName = m_takeNameArray[tSelected];
-		m_scene->SetCurrentTake( m_takeName->Buffer() );
+		m_scene->SetCurrentAnimationStack( m_scene->FindMember<FbxAnimStack>(m_takeName->Buffer()) );
 
 		if (!ImportAnimation())
 		{
@@ -254,10 +254,10 @@ bool MeshImportFBX::Import( const char* filename, NVSHARE::MeshImportInterface *
 	outputMessage( message );
 
 
-	m_scene->Destroy(true, true);
+	m_scene->Destroy(true);
 	m_scene = NULL;
 
-	m_importer->Destroy(true, true);
+	m_importer->Destroy(true);
 	m_importer = NULL;
 
 	m_sdkManager->Destroy();
@@ -277,25 +277,25 @@ void releaseMeshImportFBX(NVSHARE::MeshImporter *iface)
 
 
 /*
-void FBXImporter::nodeCollectMaterials( ApexDefaultMaterialLibrary& materialLibrary, KFbxNode* pNode )
+void FBXImporter::nodeCollectMaterials( ApexDefaultMaterialLibrary& materialLibrary, FbxNode* pNode )
 {
-	KFbxNodeAttribute* lNodeAttribute = pNode->GetNodeAttribute();
+	FbxNodeAttribute* lNodeAttribute = pNode->GetNodeAttribute();
 
 	if (lNodeAttribute)
 	{
-		KFbxLayerContainer* lLayerContainer = NULL;
+		FbxLayerContainer* lLayerContainer = NULL;
 
 		switch (lNodeAttribute->GetAttributeType())
 		{
-		case KFbxNodeAttribute::eNURB:
+		case FbxNodeAttribute::eNURB:
 			lLayerContainer = pNode->GetNurb();
 			break;
 
-		case KFbxNodeAttribute::ePATCH:
+		case FbxNodeAttribute::ePATCH:
 			lLayerContainer = pNode->GetPatch();
 			break;
 
-		case KFbxNodeAttribute::eMESH:
+		case FbxNodeAttribute::eMESH:
 			lLayerContainer = pNode->GetMesh();
 			break;
 		}
@@ -303,28 +303,28 @@ void FBXImporter::nodeCollectMaterials( ApexDefaultMaterialLibrary& materialLibr
 		if (lLayerContainer){
 			int lMaterialIndex;
 			int lTextureIndex;
-			KFbxProperty lProperty;
+			FbxProperty lProperty;
 			int lNbTex;
-			KFbxTexture* lTexture = NULL; 
-			KFbxSurfaceMaterial *lMaterial = NULL;
-			int lNbMat = pNode->GetSrcObjectCount(KFbxSurfaceMaterial::ClassId);
-			KString materialNamePrefix = m_fileName + KString( "#" );
+			FbxTexture* lTexture = NULL;
+			FbxSurfaceMaterial *lMaterial = NULL;
+			int lNbMat = pNode->GetSrcObjectCount(FbxSurfaceMaterial::ClassId);
+			FbxString materialNamePrefix = m_fileName + FbxString( "#" );
 			for (lMaterialIndex = 0; lMaterialIndex < lNbMat; lMaterialIndex++)
 			{
-				lMaterial = KFbxCast <KFbxSurfaceMaterial>(pNode->GetSrcObject(KFbxSurfaceMaterial::ClassId, lMaterialIndex));
+				lMaterial = FbxCast <FbxSurfaceMaterial>(pNode->GetSrcObject(FbxSurfaceMaterial::ClassId, lMaterialIndex));
 				if(lMaterial)
 				{ 
 					bool created;
 					ApexDefaultMaterial* material = (ApexDefaultMaterial*)materialLibrary.getMaterial( materialNamePrefix+lMaterial->GetName(), created );
 					if( created )
 					{
-						lProperty = lMaterial->FindProperty(KFbxSurfaceMaterial::sDiffuse);
+						lProperty = lMaterial->FindProperty(FbxSurfaceMaterial::sDiffuse);
 						if(lProperty.IsValid())
 						{
-							lNbTex = lProperty.GetSrcObjectCount(KFbxTexture::ClassId);
+							lNbTex = lProperty.GetSrcObjectCount(FbxTexture::ClassId);
 							for (lTextureIndex = 0; lTextureIndex < lNbTex; lTextureIndex++)
 							{
-								lTexture = KFbxCast <KFbxTexture> (lProperty.GetSrcObject(KFbxTexture::ClassId, lTextureIndex)); 
+								lTexture = FbxCast <FbxTexture> (lProperty.GetSrcObject(FbxTexture::ClassId, lTextureIndex));
 								if(lTexture)
 								{
 									ApexDefaultTextureMap* textureMap = new ApexDefaultTextureMap();
@@ -332,8 +332,8 @@ void FBXImporter::nodeCollectMaterials( ApexDefaultMaterialLibrary& materialLibr
 									// Attempt several different ways to find the file:
 									if( error == ApexDefaultTextureMap::FILE_NOT_FOUND )
 									{
-										KString localName = getFileName( lTexture->GetFileName() );
-										KString filename = m_filePath + localName;
+										FbxString localName = getFileName( lTexture->GetFileName() );
+										FbxString filename = m_filePath + localName;
 										error = textureMap->load( filename );
 										if( error == ApexDefaultTextureMap::FILE_NOT_FOUND )
 										{

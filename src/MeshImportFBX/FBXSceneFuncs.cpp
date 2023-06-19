@@ -1,6 +1,8 @@
 #include "UserMemAlloc.h"
 #include "ImportFBX.h"
 
+#include <string>
+
 // Refer to US2085 and US2087 in Rally for details on the use of these defines
 // for using frame 0 of animation instead of real bind pose when rebuilding
 //#define __USE_FRAME_0__ // default to not use first frame
@@ -14,27 +16,27 @@ int sortPolygonMaterials( const void* a, const void* b );
 // Process recursively each node of the scene. To avoid recomputing 
 // uselessly the global positions, the global position of each 
 // node is passed to it's children while browsing the node tree.
-void MeshImportFBX::ProcessScene(KFbxNode* subScene)
+void MeshImportFBX::ProcessScene(FbxNode* subScene)
 {
-	KFbxNode* pNode = subScene;
+	FbxNode* pNode = subScene;
 	if ( NULL == subScene )
 		pNode = m_scene->GetRootNode();
 
-	KFbxNodeAttribute* lNodeAttribute = pNode->GetNodeAttribute();
+	FbxNodeAttribute* lNodeAttribute = pNode->GetNodeAttribute();
     if (lNodeAttribute)
     {
-		if (lNodeAttribute->GetAttributeType() == KFbxNodeAttribute::eMESH)
+		if (lNodeAttribute->GetAttributeType() == FbxNodeAttribute::eMesh)
 		{
 			if ( pNode->Show.Get() && pNode->Visibility.Get() ) // import in if the Node is set to visible
 				AddMeshNode(pNode);
 		}
-		else if (lNodeAttribute->GetAttributeType() == KFbxNodeAttribute::eNURB)
+		else if (lNodeAttribute->GetAttributeType() == FbxNodeAttribute::eNurbs)
 		{
 			// Not supported yet. 
 			// Should have been converted into a mesh in function ConvertNurbsAndPatch().
 			//if ( pNode->Show.Get() && pNode->Visibility.Get() ) // import in if the Node is set to visible
 		}
-		else if (lNodeAttribute->GetAttributeType() == KFbxNodeAttribute::ePATCH)
+		else if (lNodeAttribute->GetAttributeType() == FbxNodeAttribute::ePatch)
 		{
 			// Not supported yet. 
 			// Should have been converted into a mesh in function ConvertNurbsAndPatch().
@@ -65,29 +67,29 @@ struct VertexSkinInfo
 	}
 };
 
-void MeshImportFBX::AddMeshNode(KFbxNode* pNode)
+void MeshImportFBX::AddMeshNode(FbxNode* pNode)
 {
-	KFbxVector4* positionValues = NULL;
-	KFbxLayerElementArrayTemplate<int>* materialIndices = NULL;
-	//KFbxLayerElementArrayTemplate<KFbxVector4>* normalValues = NULL;
-	//KFbxLayerElementArrayTemplate<int>* normalIndices = NULL;
-	KFbxLayerElementArrayTemplate<KFbxVector4>* tangentValues = NULL;
-	KFbxLayerElementArrayTemplate<int>* tangentIndices = NULL;
-	KFbxLayerElementArrayTemplate<KFbxVector4>* binormalValues = NULL;
-	KFbxLayerElementArrayTemplate<int>* binormalIndices = NULL;
-	KFbxLayerElementArrayTemplate<KFbxVector2>* uvValues = NULL;    
-	//KFbxLayerElementArrayTemplate<int>* uvIndices = NULL;    
+	FbxVector4* positionValues = NULL;
+	FbxLayerElementArrayTemplate<int>* materialIndices = NULL;
+	//FbxLayerElementArrayTemplate<FbxVector4>* normalValues = NULL;
+	//FbxLayerElementArrayTemplate<int>* normalIndices = NULL;
+	FbxLayerElementArrayTemplate<FbxVector4>* tangentValues = NULL;
+	FbxLayerElementArrayTemplate<int>* tangentIndices = NULL;
+	FbxLayerElementArrayTemplate<FbxVector4>* binormalValues = NULL;
+	FbxLayerElementArrayTemplate<int>* binormalIndices = NULL;
+	FbxLayerElementArrayTemplate<FbxVector2>* uvValues = NULL;
+	//FbxLayerElementArrayTemplate<int>* uvIndices = NULL;
 
 
-	KFbxMesh* lMesh = (KFbxMesh*) pNode->GetNodeAttribute();
+	FbxMesh* lMesh = (FbxMesh*) pNode->GetNodeAttribute();
 
-	const char* meshName = lMesh->GetCurrentTakeNodeName();
+	const char* meshName = lMesh->GetName();
 	const char* nodeName = pNode->GetName();
 
 	if(lMesh->GetLayerCount() == 0)
 		return;
 
-	KFbxLayer* lLayer0 = lMesh->GetLayer(0);
+	FbxLayer* lLayer0 = lMesh->GetLayer(0);
 
 	int lPolygonCount = lMesh->GetPolygonCount();
 	if( lPolygonCount == 0 )
@@ -112,22 +114,22 @@ void MeshImportFBX::AddMeshNode(KFbxNode* pNode)
 	//	lMesh->GetNormals(&normalValues);
 	//}
 	//lMesh->GetNormalsIndices(&normalIndices);
-	//KFbxLayerElement::EMappingMode normalMapping = lLayer0->GetNormals()->GetMappingMode();
+	//FbxLayerElement::EMappingMode normalMapping = lLayer0->GetNormals()->GetMappingMode();
 
 	// PH: tangents and binormals seem not to work, what a pity
 	lMesh->GetTangents(&tangentValues);
 	lMesh->GetTangentsIndices(&tangentIndices);
-	KFbxLayerElement::EMappingMode tangentMapping = tangentIndices ? KFbxLayerElement::eBY_POLYGON_VERTEX : KFbxLayerElement::eBY_CONTROL_POINT;
+	FbxLayerElement::EMappingMode tangentMapping = tangentIndices ? FbxLayerElement::eByPolygonVertex : FbxLayerElement::eByControlPoint;
 
 	lMesh->GetBinormals(&binormalValues);
 	lMesh->GetBinormalsIndices(&binormalIndices);	
-	KFbxLayerElement::EMappingMode binormalMapping = binormalIndices ? KFbxLayerElement::eBY_POLYGON_VERTEX : KFbxLayerElement::eBY_CONTROL_POINT;
+	FbxLayerElement::EMappingMode binormalMapping = binormalIndices ? FbxLayerElement::eByPolygonVertex : FbxLayerElement::eByControlPoint;
 
-	lMesh->GetTextureUV(&uvValues, KFbxLayerElement::eDIFFUSE_TEXTURES); 
-	//lMesh->GetTextureIndices(&uvIndices, KFbxLayerElement::eDIFFUSE_TEXTURES); 
-	//KFbxLayerElement::EMappingMode uvMapping = uvIndices ? KFbxLayerElement::eBY_POLYGON_VERTEX : KFbxLayerElement::eBY_CONTROL_POINT;
+	lMesh->GetTextureUV(&uvValues, FbxLayerElement::eTextureDiffuse);
+	//lMesh->GetTextureIndices(&uvIndices, FbxLayerElement::eTextureDiffuse);
+	//FbxLayerElement::EMappingMode uvMapping = uvIndices ? FbxLayerElement::eByPolygonVertex : FbxLayerElement::eByControlPoint;
 	// PH: This seems to work correctly, unless the eBY_CONBTROL_POINT option
-	KFbxLayerElement::EMappingMode uvMapping = KFbxLayerElement::eBY_POLYGON_VERTEX;
+	FbxLayerElement::EMappingMode uvMapping = FbxLayerElement::eByPolygonVertex;
 
 	std::vector<VertexSkinInfo> meshSkinInfo(lVertexCount);
 
@@ -146,16 +148,16 @@ void MeshImportFBX::AddMeshNode(KFbxNode* pNode)
 	if(uvValues != NULL && uvValues->GetCount() > 0)
 		mVertexFormat |= NVSHARE::MIVF_TEXEL1;
 
-	KFbxXMatrix bindShapeXform;
-	KFbxXMatrix geometryXform = GetGeometry(pNode);
-	KFbxXMatrix shapeNodeXform = m_takeInfo ? pNode->GetGlobalFromCurrentTake(m_takeInfo->mLocalTimeSpan.GetStart()) : pNode->GetGlobalFromDefaultTake();
+	FbxAMatrix bindShapeXform;
+	FbxAMatrix geometryXform = GetGeometry(pNode);
+	FbxAMatrix shapeNodeXform = m_takeInfo ? pNode->EvaluateGlobalTransform(m_takeInfo->mLocalTimeSpan.GetStart()) : pNode->EvaluateGlobalTransform();
 
 	bool isBindShapeSet = false;
 
-	int lSkinCount= lMesh->GetDeformerCount(KFbxDeformer::eSKIN);
+	int lSkinCount= lMesh->GetDeformerCount(FbxDeformer::eSkin);
 	for(int s = 0; s < lSkinCount; s++)
 	{
-		KFbxSkin* skin = ((KFbxSkin *)(lMesh->GetDeformer(0, KFbxDeformer::eSKIN)));
+		FbxSkin* skin = ((FbxSkin *)(lMesh->GetDeformer(0, FbxDeformer::eSkin)));
 
 		int clusterCount = skin->GetClusterCount();
 		if(clusterCount == 0)
@@ -163,9 +165,9 @@ void MeshImportFBX::AddMeshNode(KFbxNode* pNode)
 
 		for (int c=0; c < clusterCount; c++)
 		{
-			KFbxCluster* cluster = skin->GetCluster(c);
+			FbxCluster* cluster = skin->GetCluster(c);
 
-			KFbxNode* link = cluster->GetLink();
+			FbxNode* link = cluster->GetLink();
 			if (!link)
 				continue;
 
@@ -186,11 +188,11 @@ void MeshImportFBX::AddMeshNode(KFbxNode* pNode)
 
 			if(!isBindShapeSet)
 			{
-				KFbxXMatrix bindShapeBaseXform;
-				KFbxXMatrix bindLinkWorldMat;
+				FbxAMatrix bindShapeBaseXform;
+				FbxAMatrix bindLinkWorldMat;
 				cluster->GetTransformLinkMatrix( bindLinkWorldMat );
 
-				if ( cluster->GetLinkMode() == KFbxLink::eADDITIVE && cluster->GetAssociateModel() )
+				if ( cluster->GetLinkMode() == FbxCluster::eAdditive && cluster->GetAssociateModel() )
 				{
 					cluster->GetTransformAssociateModelMatrix(bindShapeBaseXform);
 				}
@@ -208,8 +210,8 @@ void MeshImportFBX::AddMeshNode(KFbxNode* pNode)
 				bindShapeXform = bindShapeBaseXform;//shapeNodeXform * bindShapeBaseXform * geometryXform;
 
 #ifdef __USE_FRAME_0__ // skin to frame 0
-				bindShapeXform *= pNode->GetGlobalFromCurrentTake( KTime( 0 ) );
-#endif __USE_FRAME_0__
+				bindShapeXform *= pNode->GetGlobalFromCurrentTake( FbxTime( 0 ) );
+#endif // __USE_FRAME_0__
 
 				meshWorldBindShapeXforms[boneIndex] = bindShapeXform;
 
@@ -304,8 +306,8 @@ void MeshImportFBX::AddMeshNode(KFbxNode* pNode)
 	partition.push_back(lPolygonCount);
 
 	unsigned submeshCount = (unsigned)partition.size();
-	int lNbMat = pNode->GetSrcObjectCount(KFbxSurfaceMaterial::ClassId);
-	KString materialNamePrefix = m_fileName + KString( "#" );
+	int lNbMat = pNode->GetSrcObjectCount(FbxCriteria::ObjectType(FbxSurfaceMaterial::ClassId));
+	FbxString materialNamePrefix = m_fileName + FbxString( "#" );
 
 	std::vector<NVSHARE::MeshVertex> meshVertices(lPolyVertexCount);
 
@@ -313,32 +315,32 @@ void MeshImportFBX::AddMeshNode(KFbxNode* pNode)
 	{
 		PolygonMaterial* tmat = &sortedPolygonMaterials[partition[submeshIndex]];
 		
-		KFbxSurfaceMaterial* lMaterial = NULL;
+		FbxSurfaceMaterial* lMaterial = NULL;
 		if( tmat->materialIndex >= 0 && tmat->materialIndex < lNbMat )
 		{
-			lMaterial = KFbxCast <KFbxSurfaceMaterial>(pNode->GetSrcObject(KFbxSurfaceMaterial::ClassId, tmat->materialIndex));
+			lMaterial = FbxCast <FbxSurfaceMaterial>(pNode->GetSrcObject(FbxCriteria::ObjectType(FbxSurfaceMaterial::ClassId), tmat->materialIndex));
 		}
 
 		const int polygonNum = partition[submeshIndex+1]-partition[submeshIndex];
 
 		// PH: Why on earth do we need a material prefix?
-		//KString materialName = lMaterial ? (materialNamePrefix+lMaterial->GetName()) : KString("");
-		KString materialName = lMaterial ? lMaterial->GetName() : KString("");
+		//FbxString materialName = lMaterial ? (materialNamePrefix+lMaterial->GetName()) : FbxString("");
+		FbxString materialName = lMaterial ? FbxString(lMaterial->GetName()) : FbxString("");
 		std::string info;
 
 		if ( lMaterial )
 		{
-			KFbxProperty lProperty = lMaterial->FindProperty( KFbxSurfaceMaterial::sDiffuse );
+			FbxProperty lProperty = lMaterial->FindProperty( FbxSurfaceMaterial::sDiffuse );
 			if( !lProperty.IsValid( ) )
 				continue;
 
-			int lNbTex = lProperty.GetSrcObjectCount( KFbxTexture::ClassId );
+			int lNbTex = lProperty.GetSrcObjectCount( FbxCriteria::ObjectType(FbxTexture::ClassId) );
 			for (int lTextureIndex = 0; lTextureIndex < lNbTex; ++lTextureIndex )
 			{
-				KFbxTexture * lTexture = KFbxCast<KFbxTexture>( lProperty.GetSrcObject( KFbxTexture::ClassId, lTextureIndex ) ); 
+				FbxTexture * lTexture = FbxCast<FbxTexture>( lProperty.GetSrcObject( FbxCriteria::ObjectType(FbxTexture::ClassId), lTextureIndex ) );
 				if ( !lTexture )
 					continue;
-				KString textureFileName = lTexture->GetFileName( );
+				FbxString textureFileName = lTexture->GetName( );
 				info = "diffuse=" + textureFileName;
 				break;
 			}
@@ -358,59 +360,59 @@ void MeshImportFBX::AddMeshNode(KFbxNode* pNode)
 
 				NVSHARE::MeshVertex& meshVertex = meshVertices[lPolyVertexIndex];
 				VertexSkinInfo& vertexSkinInfo = meshSkinInfo[lVertexIndex];
-				KFbxVector4& sourceVert = positionValues[lVertexIndex];
+				FbxVector4& sourceVert = positionValues[lVertexIndex];
 
-				KFbxVector4 sourceNorm;
+				FbxVector4 sourceNorm;
 				lMesh->GetPolygonVertexNormal(lPolygonIndex, lPolyLocalVertexIndex, sourceNorm);
 				sourceNorm[3] = 0;
 
-				KFbxVector4 sourceTangent;
+				FbxVector4 sourceTangent;
 				if (tangentValues != NULL)
 				{
-					if (tangentMapping == KFbxLayerElement::eBY_POLYGON_VERTEX)
+					if (tangentMapping == FbxLayerElement::eByPolygonVertex)
 					{
 						int tangentIndex = tangentIndices->GetAt(lPolygonIndex);
 						sourceTangent = tangentValues->GetAt(tangentIndex);
 					}
-					else // KFbxLayerElement::eBY_CONTROL_POINT
+					else // FbxLayerElement::eByControlPoint
 					{
 						sourceTangent = tangentValues->GetAt(lVertexIndex);
 					}
 				}
 
-				KFbxVector4 sourceBinormal;
+				FbxVector4 sourceBinormal;
 				if (binormalValues != NULL)
 				{
-					if (tangentMapping == KFbxLayerElement::eBY_POLYGON_VERTEX)
+					if (tangentMapping == FbxLayerElement::eByPolygonVertex)
 					{
 						int binormalIndex = binormalIndices->GetAt(lPolygonIndex);
 						sourceBinormal = binormalValues->GetAt(binormalIndex);
 					}
-					else // KFbxLayerElement::eBY_CONTROL_POINT
+					else // FbxLayerElement::eByControlPoint
 					{
 						sourceBinormal = binormalValues->GetAt(lVertexIndex);
 					}
 				}
 
-				KFbxVector2 sourceUV;
+				FbxVector2 sourceUV;
 				if(uvValues != NULL)
 				{
-					if (uvMapping == KFbxLayerElement::eBY_POLYGON_VERTEX)
+					if (uvMapping == FbxLayerElement::eByPolygonVertex)
 					{
 						int uvIndex = lMesh->GetTextureUVIndex(lPolygonIndex, lPolyLocalVertexIndex);
 						sourceUV = uvValues->GetAt(uvIndex);
 					}
-					else // KFbxLayerElement::eBY_CONTROL_POINT
+					else // FbxLayerElement::eByControlPoint
 					{
 						// PH: This does not seem to lead to good results, not sure why, using the other codepath from now on
 						sourceUV = uvValues->GetAt(lVertexIndex);
 					}
 				}
 
-				KFbxVector4 accumVert;
-				KFbxVector4 accumNorm;
-				KFbxVector4 accumTangent;
-				KFbxVector4 accumBinormal;
+				FbxVector4 accumVert;
+				FbxVector4 accumNorm;
+				FbxVector4 accumTangent;
+				FbxVector4 accumBinormal;
 				//#define ACCUMULATE_BIND_SHAPE
 #ifdef ACCUMULATE_BIND_SHAPE
 				for(int a = 0; a < MAX_BONES; a++ )
@@ -418,16 +420,16 @@ void MeshImportFBX::AddMeshNode(KFbxNode* pNode)
 					if(vertexSkinInfo.mWeight[a] == 0)
 						break;
 
-					KFbxXMatrix& bindXform = meshWorldBindShapeXforms[vertexSkinInfo.mBone[a]];
-					KFbxXMatrix bindXformWithoutTranslation(bindXform);
-					bindXformWithoutTranslation.SetT(KFbxVector4(0.0f, 0.0f, 0.0f, 1.0f));
+					FbxAMatrix& bindXform = meshWorldBindShapeXforms[vertexSkinInfo.mBone[a]];
+					FbxAMatrix bindXformWithoutTranslation(bindXform);
+					bindXformWithoutTranslation.SetT(FbxVector4(0.0f, 0.0f, 0.0f, 1.0f));
 
 					float bindWeight = vertexSkinInfo.mWeight[a];
 
-					KFbxVector4 bindVert = bindXform.MultT(sourceVert);
-					KFbxVector4 bindNorm = bindXformWithoutTranslation.MultT(sourceNorm);
-					KFbxVector4 bindTangent;
-					KFbxVector4 bindBinormal;
+					FbxVector4 bindVert = bindXform.MultT(sourceVert);
+					FbxVector4 bindNorm = bindXformWithoutTranslation.MultT(sourceNorm);
+					FbxVector4 bindTangent;
+					FbxVector4 bindBinormal;
 					if (tangentValues != NULL)
 					{
 						bindTangent = bindXformWithoutTranslation.MultT(sourceTangent);
@@ -451,13 +453,13 @@ void MeshImportFBX::AddMeshNode(KFbxNode* pNode)
 					// "pNode->GetScene()->GetEvaluator()->GetNodeGlobalTransform(pNode, pTime);"
 					// but in the currently in used version, it is not there, so we have to use GetGlobalFromDefaultTake()
 
-					bindShapeXform = lMesh->GetNode()->GetGlobalFromDefaultTake() * GetGeometry( lMesh->GetNode() ); // get bind pose
+					bindShapeXform = lMesh->GetNode()->EvaluateGlobalTransform() * GetGeometry( lMesh->GetNode() ); // get bind pose
 				}
 
 				accumVert = bindShapeXform.MultT(sourceVert);
 
-				KFbxXMatrix bindShapeXformWithoutTranslation(bindShapeXform);
-				bindShapeXformWithoutTranslation.SetT(KFbxVector4(0.0f, 0.0f, 0.0f, 1.0f));
+				FbxAMatrix bindShapeXformWithoutTranslation(bindShapeXform);
+				bindShapeXformWithoutTranslation.SetT(FbxVector4(0.0f, 0.0f, 0.0f, 1.0f));
 				accumNorm = bindShapeXformWithoutTranslation.MultT(sourceNorm);
 				if (tangentValues != NULL)
 				{
@@ -526,13 +528,13 @@ void MeshImportFBX::AddMeshNode(KFbxNode* pNode)
 
 	
 
-//void MeshImportFBX::AddSkeletonNode(KFbxNode* pNode, KTime& pTime, KFbxXMatrix& pGlobalPosition)
+//void MeshImportFBX::AddSkeletonNode(FbxNode* pNode, FbxTime& pTime, FbxAMatrix& pGlobalPosition)
 //{
-//	KFbxSkeleton* lSkeleton = (KFbxSkeleton*) pNode->GetNodeAttribute();
-//	KFbxNode* pParentNode = pNode->GetParent();
+//	FbxSkeleton* lSkeleton = (FbxSkeleton*) pNode->GetNodeAttribute();
+//	FbxNode* pParentNode = pNode->GetParent();
 //
-//	KFbxNodeAttribute* testAttr;
-//	KFbxNodeAttribute::EAttributeType testType;
+//	FbxNodeAttribute* testAttr;
+//	FbxNodeAttribute::EType testType;
 //	if(pParentNode)
 //	{
 //		testAttr = pParentNode->GetNodeAttribute();
@@ -541,12 +543,12 @@ void MeshImportFBX::AddMeshNode(KFbxNode* pNode)
 //	}
 //
 //
-//	KFbxSkeleton::ESkeletonType skelType = lSkeleton->GetSkeletonType();
+//	FbxSkeleton::ESkeletonType skelType = lSkeleton->GetSkeletonType();
 //    // We're only intersted if this is a limb node and if 
 //    // the parent also has an attribute of type skeleton.
 //	
 //    if (
-//		lSkeleton->GetSkeletonType() == KFbxSkeleton::eLIMB_NODE &&
+//		lSkeleton->GetSkeletonType() == FbxSkeleton::eLimbNode &&
 //        pParentNode
 //       )
 //	{
@@ -556,7 +558,7 @@ void MeshImportFBX::AddMeshNode(KFbxNode* pNode)
 //
 //		// Root Bone
 //		bool isRoot = false;
-//		if((!pParentNode->GetNodeAttribute()) || (!pParentNode->GetNodeAttribute()->GetAttributeType() == KFbxNodeAttribute::eSKELETON))
+//		if((!pParentNode->GetNodeAttribute()) || (!pParentNode->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eSkeleton))
 //		{
 //			isRoot = true;
 //			
@@ -564,7 +566,7 @@ void MeshImportFBX::AddMeshNode(KFbxNode* pNode)
 //
 //		const char * attrName;
 //		const char * attrNodeName;
-//		KFbxNode* attrNode;
+//		FbxNode* attrNode;
 //		
 //		NVSHARE::MeshBone* bone = new NVSHARE::MeshBone();
 //
@@ -582,14 +584,14 @@ void MeshImportFBX::AddMeshNode(KFbxNode* pNode)
 //		fbxDouble3 p = pNode->LclTranslation.Get();
 //		fbxDouble3 s = pNode->LclScaling.Get();
 //	
-//		KFbxVector4 preRotate = pNode->PreRotation.Get();
-//		KFbxVector4 rot(r[0],r[1],r[2]);
-//		KFbxVector4 pos(p[0],p[1],p[2]);
-//		KFbxVector4 scl(s[0],s[1],s[2]);
+//		FbxVector4 preRotate = pNode->PreRotation.Get();
+//		FbxVector4 rot(r[0],r[1],r[2]);
+//		FbxVector4 pos(p[0],p[1],p[2]);
+//		FbxVector4 scl(s[0],s[1],s[2]);
 //
 //
 //
-//		KFbxXMatrix lGlobalPosition(pos, rot + preRotate, scl);
+//		FbxAMatrix lGlobalPosition(pos, rot + preRotate, scl);
 //	
 //	    addBoneInfo(pName, bone, lGlobalPosition, isRoot);
 //
@@ -599,28 +601,28 @@ void MeshImportFBX::AddMeshNode(KFbxNode* pNode)
 
 
 
-void MeshImportFBX::ConvertNurbsAndPatchRecursive(KFbxSdkManager* pSdkManager,  KFbxScene* pScene, KFbxNode* pNode)
+void MeshImportFBX::ConvertNurbsAndPatchRecursive(FbxManager* pSdkManager,  FbxScene* pScene, FbxNode* pNode)
 {
-    KFbxNodeAttribute* lNodeAttribute = pNode->GetNodeAttribute();
+    FbxNodeAttribute* lNodeAttribute = pNode->GetNodeAttribute();
     if (lNodeAttribute)
     {
-		KFbxNodeAttribute::EAttributeType attributeType = lNodeAttribute->GetAttributeType();
-		if(attributeType == KFbxNodeAttribute::eNURBS_SURFACE)
+		FbxNodeAttribute::EType attributeType = lNodeAttribute->GetAttributeType();
+		if(attributeType == FbxNodeAttribute::eNurbsSurface)
 		{
-			KFbxGeometryConverter lConverter(pSdkManager);
-			lConverter.ConvertNurbsSurfaceToNurbInPlace(pNode);
+			FbxGeometryConverter lConverter(pSdkManager);
+			lConverter.ConvertNurbsSurfaceToNurbsInPlace(pNode);
 		}
 	}
 	
 	lNodeAttribute = pNode->GetNodeAttribute();
 	if(lNodeAttribute)
 	{
-		KFbxNodeAttribute::EAttributeType attributeType = lNodeAttribute->GetAttributeType();
-        if (attributeType == KFbxNodeAttribute::eNURB ||
-            attributeType == KFbxNodeAttribute::ePATCH)
+		FbxNodeAttribute::EType attributeType = lNodeAttribute->GetAttributeType();
+        if (attributeType == FbxNodeAttribute::eNurbs ||
+            attributeType == FbxNodeAttribute::ePatch)
         {
-			KFbxGeometryConverter lConverter(pSdkManager);
-            lConverter.TriangulateInPlace(pNode);
+			FbxGeometryConverter lConverter(pSdkManager);
+            lConverter.Triangulate(lNodeAttribute, true);
         }
     }
 
@@ -633,7 +635,7 @@ void MeshImportFBX::ConvertNurbsAndPatchRecursive(KFbxSdkManager* pSdkManager,  
 }
 
 
-void MeshImportFBX::ConvertNurbsAndPatch(KFbxSdkManager* pSdkManager, KFbxScene* pScene)
+void MeshImportFBX::ConvertNurbsAndPatch(FbxManager* pSdkManager, FbxScene* pScene)
 {
     ConvertNurbsAndPatchRecursive(pSdkManager, pScene, pScene->GetRootNode());
 }
@@ -644,7 +646,7 @@ void MeshImportFBX::ConvertNurbsAndPatch(KFbxSdkManager* pSdkManager, KFbxScene*
 
 /*
 
-void MeshImportFBX::LoadTexture(KFbxTexture* pTexture, KArrayTemplate<VSTexture*>& pTextureArray)
+void MeshImportFBX::LoadTexture(FbxTexture* pTexture, FbxArray<VSTexture*>& pTextureArray)
 {
     // First find if the texture is already loaded
     int i, lCount = pTextureArray.GetCount();
@@ -655,7 +657,7 @@ void MeshImportFBX::LoadTexture(KFbxTexture* pTexture, KArrayTemplate<VSTexture*
     }
 
     // Right now, only Targa textures are loaded by this sample
-    KString lFileName = pTexture->GetFileName();
+    FbxString lFileName = pTexture->GetFileName();
 
     if (lFileName.Right(3).Upper() == "TGA")
     {
@@ -689,28 +691,28 @@ void MeshImportFBX::LoadTexture(KFbxTexture* pTexture, KArrayTemplate<VSTexture*
 */
 
 /*
-void MeshImportFBX::LoadSupportedTexturesRecursive(KFbxNode* pNode, KArrayTemplate<VSTexture*>& pTextureArray)
+void MeshImportFBX::LoadSupportedTexturesRecursive(FbxNode* pNode, FbxArray<VSTexture*>& pTextureArray)
 {
     if (pNode)
     {
         int i, lCount;
-        KFbxNodeAttribute* lNodeAttribute = pNode->GetNodeAttribute();
+        FbxNodeAttribute* lNodeAttribute = pNode->GetNodeAttribute();
 
         if (lNodeAttribute)
         {
-            KFbxLayerContainer* lLayerContainer = NULL;
+            FbxLayerContainer* lLayerContainer = NULL;
 
             switch (lNodeAttribute->GetAttributeType())
             {
-            case KFbxNodeAttribute::eNURB:
+            case FbxNodeAttribute::eNURB:
                 lLayerContainer = pNode->GetNurb();
                 break;
 
-            case KFbxNodeAttribute::ePATCH:
+            case FbxNodeAttribute::ePATCH:
                 lLayerContainer = pNode->GetPatch();
                 break;
 
-            case KFbxNodeAttribute::eMESH:
+            case FbxNodeAttribute::eMESH:
                 lLayerContainer = pNode->GetMesh();
                 break;
             }
@@ -718,19 +720,19 @@ void MeshImportFBX::LoadSupportedTexturesRecursive(KFbxNode* pNode, KArrayTempla
             if (lLayerContainer){
                 int lMaterialIndex;
                 int lTextureIndex;
-                KFbxProperty lProperty;
+                FbxProperty lProperty;
                 int lNbTex;
-                KFbxTexture* lTexture = NULL; 
-                KFbxSurfaceMaterial *lMaterial = NULL;
-                int lNbMat = pNode->GetSrcObjectCount(KFbxSurfaceMaterial::ClassId);
+                FbxTexture* lTexture = NULL;
+                FbxSurfaceMaterial *lMaterial = NULL;
+                int lNbMat = pNode->GetSrcObjectCount(FbxSurfaceMaterial::ClassId);
                 for (lMaterialIndex = 0; lMaterialIndex < lNbMat; lMaterialIndex++){
-                    lMaterial = KFbxCast <KFbxSurfaceMaterial>(pNode->GetSrcObject(KFbxSurfaceMaterial::ClassId, lMaterialIndex));
+                    lMaterial = FbxCast <FbxSurfaceMaterial>(pNode->GetSrcObject(FbxSurfaceMaterial::ClassId, lMaterialIndex));
                     if(lMaterial){                                                          
-                        lProperty = lMaterial->FindProperty(KFbxSurfaceMaterial::sDiffuse);
+                        lProperty = lMaterial->FindProperty(FbxSurfaceMaterial::sDiffuse);
                         if(lProperty.IsValid()){
-                            lNbTex = lProperty.GetSrcObjectCount(KFbxTexture::ClassId);
+                            lNbTex = lProperty.GetSrcObjectCount(FbxTexture::ClassId);
                             for (lTextureIndex = 0; lTextureIndex < lNbTex; lTextureIndex++){
-                                lTexture = KFbxCast <KFbxTexture> (lProperty.GetSrcObject(KFbxTexture::ClassId, lTextureIndex)); 
+                                lTexture = FbxCast <FbxTexture> (lProperty.GetSrcObject(FbxTexture::ClassId, lTextureIndex));
                                 if(lTexture)
                                     LoadTexture(lTexture, pTextureArray);
                             }
@@ -751,7 +753,7 @@ void MeshImportFBX::LoadSupportedTexturesRecursive(KFbxNode* pNode, KArrayTempla
 */
 
 /*
-void MeshImportFBX::LoadSupportedTextures(KFbxScene* pScene, KArrayTemplate<VSTexture*>& pTextureArray)
+void MeshImportFBX::LoadSupportedTextures(FbxScene* pScene, FbxArray<VSTexture*>& pTextureArray)
 {
     pTextureArray.Clear();
 
@@ -759,25 +761,25 @@ void MeshImportFBX::LoadSupportedTextures(KFbxScene* pScene, KArrayTemplate<VSTe
 }*/
 
 
-inline void MeshImportFBX::GetBindPoseMatrix(KFbxCluster* lCluster, KFbxXMatrix& bindPose)
+inline void MeshImportFBX::GetBindPoseMatrix(FbxCluster* lCluster, FbxAMatrix& bindPose)
 {
 	 // Get the link initial global position and the link current global position.
      lCluster->GetTransformLinkMatrix(bindPose);
 }
 
-inline void MeshImportFBX::GetBindShapeMatrix( KFbxCluster* lCluster, KFbxXMatrix& bindShape)
+inline void MeshImportFBX::GetBindShapeMatrix( FbxCluster* lCluster, FbxAMatrix& bindShape)
 {   
 			lCluster->GetTransformMatrix(bindShape);       
 }
 
 
 // Deform the vertex array with the links contained in the mesh.
-void MeshImportFBX::ApplyVertexTransform(KFbxMesh* pMesh, NVSHARE::MeshVertex* pVertexArray)
+void MeshImportFBX::ApplyVertexTransform(FbxMesh* pMesh, NVSHARE::MeshVertex* pVertexArray)
 {
 	
 	int lVertexCount = pMesh->GetControlPointsCount();
 
-	KFbxXMatrix lVertexTransformMatrix;
+	FbxAMatrix lVertexTransformMatrix;
 
 	int* lBoneCount = new int[lVertexCount];
 	memset(lBoneCount, 0, lVertexCount * sizeof(int));
@@ -785,8 +787,8 @@ void MeshImportFBX::ApplyVertexTransform(KFbxMesh* pMesh, NVSHARE::MeshVertex* p
     double* lBoneWeight = new double[lVertexCount];
     memset(lBoneWeight, 0, lVertexCount * sizeof(double));
 
-    int lSkinCount=pMesh->GetDeformerCount(KFbxDeformer::eSKIN);
-    int clusterCount = ((KFbxSkin *)(pMesh->GetDeformer(0, KFbxDeformer::eSKIN)))->GetClusterCount();
+    int lSkinCount=pMesh->GetDeformerCount(FbxDeformer::eSkin);
+    int clusterCount = ((FbxSkin *)(pMesh->GetDeformer(0, FbxDeformer::eSkin)))->GetClusterCount();
 
 	if(clusterCount == 0)
 		return;
@@ -798,7 +800,7 @@ void MeshImportFBX::ApplyVertexTransform(KFbxMesh* pMesh, NVSHARE::MeshVertex* p
 		{
 			
 
-			KFbxCluster* lCluster =((KFbxSkin *) pMesh->GetDeformer(i, KFbxDeformer::eSKIN))->GetCluster(j);
+			FbxCluster* lCluster =((FbxSkin *) pMesh->GetDeformer(i, FbxDeformer::eSkin))->GetCluster(j);
 			if (!lCluster->GetLink())
 				continue;
 
@@ -825,8 +827,8 @@ void MeshImportFBX::ApplyVertexTransform(KFbxMesh* pMesh, NVSHARE::MeshVertex* p
 				 int count = lBoneCount[lIndex];
 
 				 float* lSrcVertex = &pVertexArray[lIndex].mPos[0];
-				 KFbxVector4 srcVec((double)lSrcVertex[0],(double)lSrcVertex[1],(double)lSrcVertex[2]);
-				 KFbxVector4 dstVec;
+				 FbxVector4 srcVec((double)lSrcVertex[0],(double)lSrcVertex[1],(double)lSrcVertex[2]);
+				 FbxVector4 dstVec;
 
 				 dstVec = lVertexTransformMatrix.MultT(srcVec);
 	           
@@ -857,7 +859,7 @@ void MeshImportFBX::ApplyVertexTransform(KFbxMesh* pMesh, NVSHARE::MeshVertex* p
 
 
 // Scale all the elements of a matrix.
-inline void MeshImportFBX::MatrixScale(KFbxXMatrix& pMatrix, double pValue)
+inline void MeshImportFBX::MatrixScale(FbxAMatrix& pMatrix, double pValue)
 {
     int i,j;
 
@@ -871,7 +873,7 @@ inline void MeshImportFBX::MatrixScale(KFbxXMatrix& pMatrix, double pValue)
 }
 
 // Add a value to all the elements in the diagonal of the matrix.
-inline void MeshImportFBX::MatrixAddToDiagonal(KFbxXMatrix& pMatrix, double pValue)
+inline void MeshImportFBX::MatrixAddToDiagonal(FbxAMatrix& pMatrix, double pValue)
 {
     pMatrix[0][0] += pValue;
     pMatrix[1][1] += pValue;
@@ -880,7 +882,7 @@ inline void MeshImportFBX::MatrixAddToDiagonal(KFbxXMatrix& pMatrix, double pVal
 }
 
 // Sum two matrices element by element.
-inline void MeshImportFBX::MatrixAdd(KFbxXMatrix& pDstMatrix, KFbxXMatrix& pSrcMatrix)
+inline void MeshImportFBX::MatrixAdd(FbxAMatrix& pDstMatrix, FbxAMatrix& pSrcMatrix)
 {
     int i,j;
 
@@ -897,8 +899,8 @@ inline void MeshImportFBX::MatrixAdd(KFbxXMatrix& pDstMatrix, KFbxXMatrix& pSrcM
 
 bool MeshImportFBX::ImportAnimation()
 {
-	KArrayTemplate<KString*> takeNames;
-	m_scene->FillTakeNameArray(takeNames);
+	FbxArray<FbxString*> takeNames;
+	m_scene->FillAnimStackNameArray(takeNames);
 	int takeCount = takeNames.GetCount();
 	if(takeCount == 0)
 		return true;
@@ -908,12 +910,12 @@ bool MeshImportFBX::ImportAnimation()
 	for(int t = 0; t < takeCount && m_takeInfo == NULL; t++ )
 	{
 		m_takeName = takeNames[t];
-		m_scene->SetCurrentTake( m_takeName->Buffer() );
+		m_scene->SetCurrentAnimationStack( m_scene->FindMember<FbxAnimStack>(m_takeName->Buffer()) );
 		m_takeInfo =  m_scene->GetTakeInfo( *m_takeName );
 	}
 
-	KTime start = 0;
-	KTime stop = 0;
+	FbxTime start = 0;
+	FbxTime stop = 0;
 
     if (m_takeInfo)
     {
@@ -924,14 +926,14 @@ bool MeshImportFBX::ImportAnimation()
 	if ( start < 0 || stop < 0 ) // local data time is not reliable
     {
 		// get global time
-		KTimeSpan lTimeLine;
-		m_scene->GetGlobalTimeSettings().GetTimelineDefautTimeSpan(lTimeLine);
+		FbxTimeSpan lTimeLine;
+		m_scene->GetGlobalSettings().GetTimelineDefaultTimeSpan(lTimeLine);
 
         start = lTimeLine.GetStart();
         stop  = lTimeLine.GetStop();
     }
 
-	KTimeSpan span(start, stop);
+	FbxTimeSpan span(start, stop);
 	float dTime = 0.02f;// Magic timestep from clothing tool NX_TIME_STEP
 
 	double dDurationSecond = span.GetDuration().GetSecondDouble();
@@ -964,7 +966,7 @@ bool MeshImportFBX::ImportAnimation()
 
 	for(int b=0;b<meshBones.size();b++)
 	{
-		KFbxNode* node = meshNodes[b];
+		FbxNode* node = meshNodes[b];
 		const NVSHARE::MeshBone& bone = meshBones[b];
 		NVSHARE::MeshAnimTrack& track = meshTracks[b];
 		meshTrackPtrs[b] = &track;
@@ -976,8 +978,8 @@ bool MeshImportFBX::ImportAnimation()
 		track.mDtime = dTime * 200.0f;//compensate for fricken magic number in SkeletalAnim.cpp
 	}
 
-	KTime keyTime = start;
-	KTime stepTime;
+	FbxTime keyTime = start;
+	FbxTime stepTime;
 	stepTime.SetSecondDouble(dTime);
 
 	for(int f=0;f<numFrames; f++, keyTime+=stepTime)
@@ -985,8 +987,8 @@ bool MeshImportFBX::ImportAnimation()
 		//Get Globals
 		for(int b=0;b<meshBones.size();b++)
 		{
-			KFbxNode* node = meshNodes[b];
-			meshWorldAnimXforms[b] = node->GetGlobalFromCurrentTake( keyTime );
+			FbxNode* node = meshNodes[b];
+			meshWorldAnimXforms[b] = node->EvaluateGlobalTransform( keyTime );
 		}
 
 		//Convert to locals
@@ -995,18 +997,18 @@ bool MeshImportFBX::ImportAnimation()
 			const NVSHARE::MeshBone& bone = meshBones[b];
 			NVSHARE::MeshAnimTrack& track = meshTracks[b];
 		
-			KFbxXMatrix localAnimXform;
-			KFbxNode* node = m_scene->GetNode( b );
+			FbxAMatrix localAnimXform;
+			FbxNode* node = m_scene->GetNode( b );
 			if(bone.mParentIndex == -1)
 			{
 				localAnimXform = meshWorldAnimXforms[b];
-				//localAnimXform = node->GetGlobalFromCurrentTake( KTime( 0 ) ).Inverse() * meshWorldAnimXforms[b];
+				//localAnimXform = node->GetGlobalFromCurrentTake( FbxTime( 0 ) ).Inverse() * meshWorldAnimXforms[b];
 			}
 			else
 			{
 				localAnimXform = meshWorldAnimXforms[bone.mParentIndex].Inverse() * meshWorldAnimXforms[b];
-				//localAnimXform = (m_scene->GetNode(bone.mParentIndex)->GetGlobalFromCurrentTake( KTime( 0 ) ).Inverse() * 
-				//				  node->GetGlobalFromCurrentTake( KTime( 0 ) ) )* 
+				//localAnimXform = (m_scene->GetNode(bone.mParentIndex)->GetGlobalFromCurrentTake( FbxTime( 0 ) ).Inverse() *
+				//				  node->GetGlobalFromCurrentTake( FbxTime( 0 ) ) )*
 				//				  meshWorldAnimXforms[bone.mParentIndex].Inverse() * meshWorldAnimXforms[b]; 
 			}
 			//localAnimXform.SetIdentity();
@@ -1032,7 +1034,7 @@ bool MeshImportFBX::ImportAnimation()
 
 
 bool MeshImportFBX::importSkeletonRecursive(
-	KFbxNode* node, 
+	FbxNode* node,
 	int parentBone, 
 	int& boneAllocator)
 {
@@ -1057,7 +1059,7 @@ bool MeshImportFBX::importSkeletonRecursive(
 	int childCount = node->GetChildCount();
 	for(int n = 0; n < childCount; n++)
 	{
-		KFbxNode* child = node->GetChild(n);
+		FbxNode* child = node->GetChild(n);
 
 		result = result && importSkeletonRecursive(child, boneIndex, boneAllocator);
 	}
@@ -1091,9 +1093,9 @@ void MeshImportFBX::ImportSkeleton()
 	// PH: Doesn't work at all :( since it does not just depend on scale, I need full bind pose for all bones!
 	for( int n = 0; n < meshBones.size(); n++)
 	{
-		KFbxXMatrix defaultTake = meshNodes[n]->GetGlobalFromDefaultTake();
-		defaultTake.SetT(KFbxVector4(0.0f, 0.0f, 0.0f, 1.0f));
-		KFbxVector4 test(1.0f, 0.0f, 0.0f, 0.0f); // we better have uniform scaling!
+		FbxAMatrix defaultTake = meshNodes[n]->GetGlobalFromDefaultTake();
+		defaultTake.SetT(FbxVector4(0.0f, 0.0f, 0.0f, 1.0f));
+		FbxVector4 test(1.0f, 0.0f, 0.0f, 0.0f); // we better have uniform scaling!
 		test = defaultTake.MultT(test);
 		meshWorldBindPoseXforms[n].SetIdentity();
 		meshWorldBindPoseXforms[n] *= test.Length();
@@ -1106,8 +1108,8 @@ void MeshImportFBX::ImportSkeleton()
 	//     course the animation is completely broken
 	for( int n = 0; n < meshBones.size(); n++)
 	{
-		meshWorldBindPoseXforms[n] = meshNodes[n]->GetGlobalFromDefaultTake(KFbxNode::eSOURCE_SET);
-		//meshWorldBindPoseXforms[n] = meshNodes[n]->GetGlobalFromDefaultTake(KFbxNode::eDESTINATION_SET);
+		meshWorldBindPoseXforms[n] = meshNodes[n]->GetGlobalFromDefaultTake(FbxNode::eSOURCE_SET);
+		//meshWorldBindPoseXforms[n] = meshNodes[n]->GetGlobalFromDefaultTake(FbxNode::eDESTINATION_SET);
 	}
 #endif
 
@@ -1120,23 +1122,23 @@ void MeshImportFBX::ImportSkeleton()
 	int numNode = m_scene->GetNodeCount();
 	for( int n = 0; n < numNode; n++)
 	{
-		KFbxNode* node = m_scene->GetNode(n);
-	    KFbxNodeAttribute* nodeAttribute = node->GetNodeAttribute();
+		FbxNode* node = m_scene->GetNode(n);
+	    FbxNodeAttribute* nodeAttribute = node->GetNodeAttribute();
 		if (!nodeAttribute)
 			continue;
 
-		if (nodeAttribute->GetAttributeType() != KFbxNodeAttribute::eMESH)
+		if (nodeAttribute->GetAttributeType() != FbxNodeAttribute::eMesh)
 			continue;
     
-		KFbxMesh* mesh = (KFbxMesh*) nodeAttribute;
+		FbxMesh* mesh = (FbxMesh*) nodeAttribute;
 	
-		int lSkinCount=mesh->GetDeformerCount(KFbxDeformer::eSKIN);
+		int lSkinCount=mesh->GetDeformerCount(FbxDeformer::eSkin);
 		if(lSkinCount == 0)
 			continue;
 
 		for(int s = 0; s < lSkinCount; s++)
 		{
-			KFbxSkin* skin = ((KFbxSkin *)(mesh->GetDeformer(0, KFbxDeformer::eSKIN)));
+			FbxSkin* skin = ((FbxSkin *)(mesh->GetDeformer(0, FbxDeformer::eSkin)));
 
 			int clusterCount = skin->GetClusterCount();
 			if(clusterCount == 0)
@@ -1144,9 +1146,9 @@ void MeshImportFBX::ImportSkeleton()
 
 			for (int c=0; c < clusterCount; c++)
 			{
-				KFbxCluster* cluster = skin->GetCluster(c);
+				FbxCluster* cluster = skin->GetCluster(c);
 
-				KFbxNode* link = cluster->GetLink();
+				FbxNode* link = cluster->GetLink();
 				if (!link)
 					continue;
 
@@ -1181,8 +1183,8 @@ void MeshImportFBX::ImportSkeleton()
 				cluster->GetTransformLinkMatrix(meshWorldBindPoseXforms[b]);
 
 #ifdef __USE_FRAME_0__ // make frame 0 are the bind pose
-				meshWorldBindPoseXforms[b] *= node->GetGlobalFromCurrentTake( KTime( 0 ) );
-#endif __USE_FRAME_0__
+				meshWorldBindPoseXforms[b] *= node->GetGlobalFromCurrentTake( FbxTime( 0 ) );
+#endif // __USE_FRAME_0__
 
 				boneInitialized[b] = true;
 				boneImportant[b] = true;
@@ -1217,22 +1219,22 @@ void MeshImportFBX::ImportSkeleton()
 	for(int b = 0; b < meshBones.size(); b++)
 	{
 		NVSHARE::MeshBone& bone = meshBones[b];
-		KFbxXMatrix& worldBindPose = meshWorldBindPoseXforms[b];
-		KFbxXMatrix localBindPose;
+		FbxAMatrix& worldBindPose = meshWorldBindPoseXforms[b];
+		FbxAMatrix localBindPose;
 
-		KFbxNode* node = m_scene->GetNode(b);
+		FbxNode* node = m_scene->GetNode(b);
 
 		if(bone.mParentIndex == -1)
 		{
 			localBindPose = worldBindPose;
-			//localBindPose *= node->GetGlobalFromCurrentTake( KTime( 0 ) );
+			//localBindPose *= node->GetGlobalFromCurrentTake( FbxTime( 0 ) );
 		}
 		else
 		{
-			KFbxXMatrix& parentWorldBindPose = meshWorldBindPoseXforms[bone.mParentIndex];
+			FbxAMatrix& parentWorldBindPose = meshWorldBindPoseXforms[bone.mParentIndex];
 
 			localBindPose = parentWorldBindPose.Inverse() * worldBindPose;
-			//localBindPose *= (m_scene->GetNode(bone.mParentIndex)->GetGlobalFromCurrentTake( KTime( 0 ) ).Inverse() * node->GetGlobalFromCurrentTake( KTime( 0 ) ) );
+			//localBindPose *= (m_scene->GetNode(bone.mParentIndex)->GetGlobalFromCurrentTake( FbxTime( 0 ) ).Inverse() * node->GetGlobalFromCurrentTake( FbxTime( 0 ) ) );
 		}
 
 		float localBindPoseF[16];
@@ -1279,13 +1281,13 @@ int sortPolygonMaterials( const void* a, const void* b )
 
 // Get the geometry deformation local to a node. It is never inherited by the
 // children.
-KFbxXMatrix MeshImportFBX::GetGeometry(KFbxNode* pNode) {
-    KFbxVector4 lT, lR, lS;
-    KFbxXMatrix lGeometry;
+FbxAMatrix MeshImportFBX::GetGeometry(FbxNode* pNode) {
+    FbxVector4 lT, lR, lS;
+    FbxAMatrix lGeometry;
 
-    lT = pNode->GetGeometricTranslation(KFbxNode::eSOURCE_SET);
-    lR = pNode->GetGeometricRotation(KFbxNode::eSOURCE_SET);
-    lS = pNode->GetGeometricScaling(KFbxNode::eSOURCE_SET);
+    lT = pNode->GetGeometricTranslation(FbxNode::eSourcePivot);
+    lR = pNode->GetGeometricRotation(FbxNode::eSourcePivot);
+    lS = pNode->GetGeometricScaling(FbxNode::eSourcePivot);
 
     lGeometry.SetT(lT);
     lGeometry.SetR(lR);
@@ -1298,7 +1300,7 @@ KFbxXMatrix MeshImportFBX::GetGeometry(KFbxNode* pNode) {
 
 // Get the global position.
 // Do not take in account the geometric transform.
-KFbxXMatrix MeshImportFBX::GetGlobalPosition(KFbxNode* pNode, KTime& pTime, KFbxXMatrix& pParentGlobalPosition)
+FbxAMatrix MeshImportFBX::GetGlobalPosition(FbxNode* pNode, FbxTime& pTime, FbxAMatrix& pParentGlobalPosition)
 {
     // Ideally this function would use parent global position and local position to
     // compute the global position.
@@ -1309,16 +1311,16 @@ KFbxXMatrix MeshImportFBX::GetGlobalPosition(KFbxNode* pNode, KTime& pTime, KFbx
     // This is why GetGlobalFromCurrentTake() is used: it always computes the right
     // global position.
 
-    return pNode->GetGlobalFromCurrentTake(pTime);
+    return pNode->EvaluateGlobalTransform(pTime);
 }
 
 
 // Get the global position of the node for the current pose.
 // If the specified node is not part of the pose, get its
 // global position at the current time.
-KFbxXMatrix MeshImportFBX::GetGlobalPosition(KFbxNode* pNode, KTime& pTime, KFbxPose* pPose, KFbxXMatrix* pParentGlobalPosition)
+FbxAMatrix MeshImportFBX::GetGlobalPosition(FbxNode* pNode, FbxTime& pTime, FbxPose* pPose, FbxAMatrix* pParentGlobalPosition)
 {
-    KFbxXMatrix lGlobalPosition;
+    FbxAMatrix lGlobalPosition;
     bool        lPositionFound = false;
 
     if (pPose)
@@ -1338,7 +1340,7 @@ KFbxXMatrix MeshImportFBX::GetGlobalPosition(KFbxNode* pNode, KTime& pTime, KFbx
             {
                 // We have a local matrix, we need to convert it to
                 // a global space matrix.
-                KFbxXMatrix lParentGlobalPosition;
+                FbxAMatrix lParentGlobalPosition;
 
                 if (pParentGlobalPosition)
                 {
@@ -1352,7 +1354,7 @@ KFbxXMatrix MeshImportFBX::GetGlobalPosition(KFbxNode* pNode, KTime& pTime, KFbx
                     }
                 }
 
-                KFbxXMatrix lLocalPosition = GetPoseMatrix(pPose, lNodeIndex);
+                FbxAMatrix lLocalPosition = GetPoseMatrix(pPose, lNodeIndex);
                 lGlobalPosition = lParentGlobalPosition * lLocalPosition;
             }
 
@@ -1370,10 +1372,10 @@ KFbxXMatrix MeshImportFBX::GetGlobalPosition(KFbxNode* pNode, KTime& pTime, KFbx
 }
 
 // Get the matrix of the given pose
-KFbxXMatrix MeshImportFBX::GetPoseMatrix(KFbxPose* pPose, int pNodeIndex)
+FbxAMatrix MeshImportFBX::GetPoseMatrix(FbxPose* pPose, int pNodeIndex)
 {
-    KFbxXMatrix lPoseMatrix;
-    KFbxMatrix lMatrix = pPose->GetMatrix(pNodeIndex);
+    FbxAMatrix lPoseMatrix;
+    FbxMatrix lMatrix = pPose->GetMatrix(pNodeIndex);
 
     memcpy((double*)lPoseMatrix, (double*)lMatrix, sizeof(lMatrix.mData));
 

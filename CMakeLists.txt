@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 project(meshimport)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${meshimport_SOURCE_DIR}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${meshimport_SOURCE_DIR}")
 
@@ -66,8 +66,27 @@ add_library(MeshImportPSK MODULE
   )
 target_link_libraries(MeshImportPSK MeshImport)
 
+add_library(MeshImportFBX MODULE
+  ${meshimport_include_common_snippets___cpp}
+  ${meshimport_src_MeshImportFBX___cpp}
+  )
+set(FBX_SDK_DIR "/Applications/Autodesk/FBX SDK/2020.3.4" CACHE PATH "FBX SDK location")
+find_library(FBX_LIBRARY
+  NAMES fbxsdk
+  NAMES_PER_DIR
+  PATH_SUFFIXES clang/release clang/debug
+  PATHS "${FBX_SDK_DIR}/lib" ENV FBX_SDK_DIR REQUIRED)
+message(STATUS "Found FBX_LIBRARY: ${FBX_LIBRARY}")
+target_link_libraries(MeshImportFBX MeshImport "${FBX_LIBRARY}")
+target_include_directories(MeshImportFBX PRIVATE "${FBX_SDK_DIR}/include")
+
 add_executable(MeshImportTest
   ${meshimport_include_common_snippets___cpp}
   ${meshimport_src_MeshImportTest___cpp}
   )
 target_link_libraries(MeshImportTest MeshImport)
+
+add_executable(MeshConvert
+  ${meshimport_app_MeshConvert___cpp}
+  )
+target_link_libraries(MeshConvert MeshImport)

@@ -2,8 +2,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <ctype.h>
+#ifdef WIN32
 #include <direct.h>
 #include <windows.h>
+#endif
 
 #include "MeshImport.h"
 
@@ -13,7 +16,7 @@ using namespace NVSHARE;
 
 static const char *         lastSlash(const char *src) // last forward or backward slash character, null if none found.
 {
-	const char *ret = 0;
+	const char *ret = nullptr;
 
 	const char *dot = strchr(src,'\\');
 	if  ( dot == 0 )
@@ -31,7 +34,7 @@ static const char *         lastSlash(const char *src) // last forward or backwa
 
 static char * findLastDot(char *scan)
 {
-  char *lastDot = 0;
+  char *lastDot = nullptr;
   while ( *scan )
   {
     if  (*scan == '.' ) lastDot = scan;
@@ -66,7 +69,7 @@ class MyMeshImportApplicationResource : public NVSHARE::MeshImportApplicationRes
 public:
 	virtual void * getApplicationResource(const char *base_name,const char *resource_name,NxU32 &len) 
 	{
-		void *ret = 0;
+		void *ret = nullptr;
 		len = 0;
 
 		FILE *fph = fopen(resource_name,"rb");
@@ -135,7 +138,7 @@ static void testBarycentric()
 #endif
 
 
-void main(NxI32 argc,const char **argv)
+int main(NxI32 argc,const char **argv)
 {
     if ( argc < 2 )
     {
@@ -149,8 +152,8 @@ void main(NxI32 argc,const char **argv)
     {
         bool rotate = false;
         bool scale  = false;
-        NxF32 meshScale = 1;
         NxF32 rot[3];
+        NxF32 meshScale[3];
 
         NVSHARE::MeshSerializeFormat inputFormat = NVSHARE::MSF_EZMESH;
         NVSHARE::MeshSerializeFormat outputFormat = NVSHARE::MSF_EZMESH;
@@ -179,24 +182,30 @@ void main(NxI32 argc,const char **argv)
             }
             else if ( strcmp(key,"-s") == 0 )
             {
-                if ( (i+1) < argc )
+                if ( ((i+2) < argc && argv[i+2][0] == '-' && argv[i+2][1] && !isdigit(argv[i+2][1])) || ((i+2) == argc) )
                 {
-                    i++;
-                    const char *value = argv[i];
-                    meshScale = (NxF32)atof(value);
-                    if ( meshScale > 0.0001f )
-                    {
-                        printf("Mesh scale set to %0.4f\r\n", meshScale );
-                        scale = true;
-                    }
-                    else
-                    {
-                        printf("Invalid mesh scale specified. %s\r\n", value );
-                    }
+                    const char *s = argv[i+1];
+                    meshScale[0] = (NxF32) atof( s );
+                    meshScale[1] = (NxF32) atof( s );
+                    meshScale[2] = (NxF32) atof( s );
+                    scale = true;
+                    i+=1;
+                }
+                else if ( (i+3) < argc )
+                {
+                    const char *x = argv[i+1];
+                    const char *y = argv[i+2];
+                    const char *z = argv[i+3];
+                    meshScale[0] = (NxF32) atof( x );
+                    meshScale[1] = (NxF32) atof( y );
+                    meshScale[2] = (NxF32) atof( z );
+                    scale = true;
+                    i+=3;
                 }
                 else
                 {
-                    printf("Missing scale value after -s\r\n");
+                    printf("Missing scale arguments.  Expect X Y Z\r\n");
+                    scale = false;
                 }
             }
             else if ( strcmp(key,"-f") == 0 )
@@ -253,19 +262,21 @@ void main(NxI32 argc,const char **argv)
         }
 
 
-
-		const char *dirname = 0;
-
-		char strExePath [MAX_PATH];
-		GetModuleFileNameA(NULL, strExePath, MAX_PATH);
-
-		char *slash = (char *)lastSlash(strExePath);
-		if ( slash )
-		{
-			*slash = 0;
-			dirname = strExePath;
-		}
-		printf("dirname=%s\r\n", dirname );
+        const char *dirname = nullptr;
+        char strExePath [MAX_PATH];
+#ifdef WIN32
+        GetModuleFileNameA(NULL, strExePath, MAX_PATH);
+#else
+        strcpy(strExePath, argv[0]);
+#endif
+        char *slash = (char *)lastSlash(strExePath);
+        if ( slash )
+        {
+            *slash = 0;
+            dirname = strExePath;
+        }
+        assert(dirname != nullptr);
+        printf("dirname=%s\n", dirname);
 
 		NVSHARE::MeshImport *meshImport = loadMeshImporters(dirname); // loads the mesh import library (dll) and all available importers from the same directory.
 		if ( meshImport )
@@ -326,8 +337,8 @@ void main(NxI32 argc,const char **argv)
 						printf("Succesfully loaded input mesh: %s\r\n", fname );
                         if ( scale )
                         {
-                            printf("Scaling input mesh by %0.4f\r\n", meshScale );
-                            meshImport->scale(msc,meshScale);
+                            printf("Scaling input mesh by (%0.4f,%0.4f,%0.4f)\r\n", meshScale[0], meshScale[1], meshScale[2] );
+                            meshImport->scale(msc,meshScale[0],meshScale[1],meshScale[2]);
                         }
 
                         if ( rotate )
@@ -336,8 +347,8 @@ void main(NxI32 argc,const char **argv)
                             meshImport->rotate(msc,rot[0],rot[1],rot[2]);
                         }
 
-                        char *lastDot = findLastDot(fname);
-                        if ( lastDot )
+
+                        if ( char *lastDot = findLastDot(fname); lastDot )
                         {
                             *lastDot = 0;
 
@@ -368,6 +379,9 @@ void main(NxI32 argc,const char **argv)
 							  case NVSHARE::MSF_ARM_BINARY:
 								  strcat(fname,".apb");
 								  break;
+                              case NVSHARE::MSF_LAST:
+                                  assert(false);
+                                  break;
                             }
 
                             NVSHARE::MeshSerialize ms(outputFormat);
@@ -396,8 +410,10 @@ void main(NxI32 argc,const char **argv)
                                   switch ( outputFormat )
                                   {
                                     case NVSHARE::MSF_EZMESH:
-                                      assert(0);
-                                      exname = 0;
+                                    case NVSHARE::MSF_FBX:
+                                    case NVSHARE::MSF_ARM_XML:
+                                    case NVSHARE::MSF_ARM_BINARY:
+                                      exname = nullptr;
                                       break;
                                     case NVSHARE::MSF_WAVEFRONT:
                                       {
@@ -410,7 +426,7 @@ void main(NxI32 argc,const char **argv)
 										}
 										else
 										{
-											exname = 0;
+											exname = nullptr;
 										}
                                       }
                                       break;
@@ -424,7 +440,7 @@ void main(NxI32 argc,const char **argv)
                                         }
                                         else
                                         {
-                                            exname = 0;
+                                            exname = nullptr;
                                             assert(0);
                                         }
                                       }
@@ -440,10 +456,13 @@ void main(NxI32 argc,const char **argv)
 										else
 										{
 											assert(0);
-											exname = 0;
+											exname = nullptr;
 										}
                                       }
                                       break;
+                                    case NVSHARE::MSF_LAST:
+                                        assert(false);
+                                        break;
                                   }
                                   if ( exname )
                                   {
@@ -494,4 +513,5 @@ void main(NxI32 argc,const char **argv)
 			printf("Failed to load MeshImport.dll from directory: %s\r\n", dirname );
 		}
     }
+    return 0;
 }

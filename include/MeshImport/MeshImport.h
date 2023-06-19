@@ -1714,7 +1714,7 @@ public:
 
   virtual void gather(MeshSystemContainer *msc) = 0;
 
-  virtual void scale(MeshSystemContainer *msc,NxF32 scale) = 0;
+  virtual void scale(MeshSystemContainer *msc,NxF32 scaleX,NxF32 scaleY,NxF32 scaleZ) = 0;
   virtual void rotate(MeshSystemContainer *msc,NxF32 rotX,NxF32 rotY,NxF32 rotZ) = 0; // rotate mesh system using these euler angles expressed as degrees.
 
   virtual VertexIndex *            createVertexIndex(NxF32 granularity) = 0;  // create an indexed vertext system for floats
@@ -1736,5 +1736,22 @@ MeshImport * loadMeshImporters(const char *directory); // loads the mesh import 
 }; // End of namespace for NVSHARE
 
 #pragma warning(pop)
+
+#ifdef WIN32
+#ifdef MESHIMPORT_EXPORTS
+#define MESHIMPORT_API __declspec(dllexport)
+#else
+#define MESHIMPORT_API __declspec(dllimport)
+#endif
+#else
+#define MESHIMPORT_API
+#endif
+
+#if 0
+extern "C"
+{
+MESHIMPORT_API NVSHARE::MeshImport * getInterface(NxI32 version_number);
+};
+#endif
 
 #endif

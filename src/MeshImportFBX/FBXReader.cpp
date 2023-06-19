@@ -6,10 +6,10 @@
 namespace NVSHARE
 {
 
-FBXImporterReader::FBXImporterReader(KFbxSdkManager &pFbxSdkManager, int pID):
-KFbxReader(pFbxSdkManager, pID),
+FBXImporterReader::FBXImporterReader(FbxManager &pFbxManager, int pID, FbxStatus &status):
+FbxReader(pFbxManager, pID, status),
 mFilePointer(NULL),
-mManager(&pFbxSdkManager)
+mManager(&pFbxManager)
 {
 }
 
@@ -29,7 +29,8 @@ bool FBXImporterReader::FileOpen(char* pFileName)
 {
     if(mFilePointer != NULL)
         FileClose();
-    if(fopen_s(&mFilePointer, pFileName, "r") != 0)
+    mFilePointer = fopen(pFileName, "r");
+    if(mFilePointer)
         return false;
     return true;
 }
@@ -47,30 +48,26 @@ bool FBXImporterReader::IsFileOpen()
     return false;
 }
 
-KFbxStreamOptions* FBXImporterReader::GetReadOptions(bool pParseFileAsNeeded)
+bool FBXImporterReader::GetReadOptions(bool pParseFileAsNeeded)
 {
-    //No need to worry, the importer that calls this, will call destroy
-    //on these stream options at the end of import.
-    KFbxStreamOptions* lStreamOptions = KFbxStreamOptions::Create(mManager, "");
-    return lStreamOptions;
+    return true;
 }
 
 //Read the custom file and reconstruct node hierarchy.
-bool FBXImporterReader::Read(KFbxDocument* pDocument, KFbxStreamOptions* pStreamOptions)
+bool FBXImporterReader::Read(FbxDocument* pDocument)
 {
     if (!pDocument)
     {
-        GetError().SetLastErrorID(eINVALID_DOCUMENT_HANDLE);
         return false;
     }
-    KFbxScene*      lScene = KFbxCast<KFbxScene>(pDocument);
+    FbxScene*      lScene = FbxCast<FbxScene>(pDocument);
     bool            lIsAScene = (lScene != NULL);
     bool            lResult = false;
 
     if(lIsAScene)
     {
-        KFbxNode* lRootNode = lScene->GetRootNode();
-        KFbxNodeAttribute * lRootNodeAttribute = KFbxNull::Create(mManager,"");
+        FbxNode* lRootNode = lScene->GetRootNode();
+        FbxNodeAttribute * lRootNodeAttribute = FbxNull::Create(mManager,"");
         lRootNode->SetNodeAttribute(lRootNodeAttribute);
 
         int lSize;
@@ -86,35 +83,35 @@ bool FBXImporterReader::Read(KFbxDocument* pDocument, KFbxStreamOptions* pStream
             lBuffer = (char*) malloc (sizeof(char)*lSize);
             size_t lRead = fread(lBuffer, 1, lSize, mFilePointer);
             lBuffer[lRead]='\0';
-            KString lString(lBuffer);
+            FbxString lString(lBuffer);
 
             //Parse the string to get name and relation of Nodes. 
-            KString lSubString, lChildName, lParentName;
-            KFbxNode* lChildNode;
-            KFbxNode* lParentNode;
-            KFbxNodeAttribute* lChildAttribute;
+            FbxString lSubString, lChildName, lParentName;
+            FbxNode* lChildNode;
+            FbxNode* lParentNode;
+            FbxNodeAttribute* lChildAttribute;
             int lEndTokenCount = lString.GetTokenCount("\n");
 
             for (int i = 0; i < lEndTokenCount; i++)
             {
                 lSubString = lString.GetToken(i, "\n");
-                KString lNodeString;
+                FbxString lNodeString;
                 lChildName = lSubString.GetToken(0, "\"");
                 lParentName = lSubString.GetToken(2, "\"");
 
                 //Build node hierarchy.
                 if(lParentName == "RootNode")
                 {
-                    lChildNode = KFbxNode::Create(mManager,lChildName.Buffer());
-                    lChildAttribute = KFbxNull::Create(mManager,"");
+                    lChildNode = FbxNode::Create(mManager,lChildName.Buffer());
+                    lChildAttribute = FbxNull::Create(mManager,"");
                     lChildNode->SetNodeAttribute(lChildAttribute);
 
                     lRootNode->AddChild(lChildNode);
                 }
                 else
                 {
-                    lChildNode = KFbxNode::Create(mManager,lChildName.Buffer());
-                    lChildAttribute = KFbxNull::Create(mManager,"");
+                    lChildNode = FbxNode::Create(mManager,lChildName.Buffer());
+                    lChildAttribute = FbxNull::Create(mManager,"");
                     lChildNode->SetNodeAttribute(lChildAttribute);
 
                     lParentNode = lRootNode->FindChild(lParentName.Buffer());
@@ -128,14 +125,15 @@ bool FBXImporterReader::Read(KFbxDocument* pDocument, KFbxStreamOptions* pStream
 }
 
 
-KFbxReader* CreateFBXImporterReader( KFbxSdkManager& pManager, KFbxImporter& pImporter, int pSubID, int pPluginID )
+FbxReader* CreateFBXImporterReader( FbxManager& pManager, FbxImporter& pImporter, int pSubID, int pPluginID )
 {
-    return new FBXImporterReader( pManager, pPluginID );
+    FbxStatus status;
+    return new FBXImporterReader( pManager, pPluginID, status );
 }
 
 
 // Get extension, description or version info about MyOwnReader
-void* GetFBXImporterReaderInfo( KFbxReader::KInfoRequest pRequest, int pId )
+void* GetFBXImporterReaderInfo( FbxReader::EInfoRequest pRequest, int pId )
 {
     static char const* sExt[] = 
     {
@@ -149,16 +147,16 @@ void* GetFBXImporterReaderInfo( KFbxReader::KInfoRequest pRequest, int pId )
 
     switch (pRequest)
     {
-    case KFbxReader::eInfoExtension:
+    case FbxReader::eInfoExtension:
         return sExt;
-    case KFbxReader::eInfoDescriptions:
+    case FbxReader::eInfoDescriptions:
         return sDesc;
     default:
         return 0;
     }
 }
 
-void FillFBXImporterReaderIOSettings( KFbxIOSettings& pIOS )
+void FillFBXImporterReaderIOSettings( FbxIOSettings& pIOS )
 {    
 }
 

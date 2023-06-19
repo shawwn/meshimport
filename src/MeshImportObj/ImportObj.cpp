@@ -237,7 +237,7 @@ bool OBJ::importMesh(const char *fname,const void *_data,NxU32 len,MeshImportInt
       ObjMaterial *o = (*i);
 
       char scratch[2048];
-      snprintf(scratch,sizeof(scratch),"diffuse=%s,Ns=%s,Ka=(%s,%s,%s),Kd=(%s,%s,%s),Ks=(%s,%s,%s)",
+      snprintf(scratch,sizeof(scratch),"map_Kd %s\nNs %s\nKa %s %s %s\nKd %s %s %s\nKs %s %s %s",
         o->map_kd.Get(),
         FloatString(o->Ns),
         FloatString(o->Ka.x),

@@ -12,31 +12,31 @@ namespace NVSHARE
 #define OUTPUT_TEXT_BUFFER_SIZE	1000
 
 
-class FBXImporterReader : public KFbxReader
+class FBXImporterReader : public FbxReader
 {
 public:
 
 
-    FBXImporterReader(KFbxSdkManager &pFbxSdkManager, int pID);
+    FBXImporterReader(FbxManager &pFbxManager, int pID, FbxStatus& status);
 
     virtual ~FBXImporterReader();
 
     virtual void GetVersion(int& pMajor, int& pMinor, int& pRevision) const;
-    virtual bool FileOpen(char* pFileName);
-    virtual bool FileClose();
-    virtual bool IsFileOpen();
+    virtual bool FileOpen(char* pFileName) override;
+    virtual bool FileClose() override;
+    virtual bool IsFileOpen() override;
 
-    virtual KFbxStreamOptions* GetReadOptions(bool pParseFileAsNeeded = true);
-    virtual bool Read(KFbxDocument* pDocument, KFbxStreamOptions* pStreamOptions);
+    virtual bool GetReadOptions(bool pParseFileAsNeeded = true) override;
+    virtual bool Read(FbxDocument* pDocument) override;
 
 private:
     FILE *mFilePointer;
-    KFbxSdkManager *mManager;
+    FbxManager *mManager;
 };
 
-extern  KFbxReader* CreateFBXImporterReader( KFbxSdkManager& pManager, KFbxImporter& pImporter, int pSubID, int pPluginID );
-extern void* GetFBXImporterReaderInfo( KFbxReader::KInfoRequest pRequest, int pId );
-extern void FillFBXImporterReaderIOSettings( KFbxIOSettings& pIOS );
+extern  FbxReader* CreateFBXImporterReader( FbxManager& pManager, FbxImporter& pImporter, int pSubID, int pPluginID );
+extern void* GetFBXImporterReaderInfo( FbxReader::EInfoRequest pRequest, int pId );
+extern void FillFBXImporterReaderIOSettings( FbxIOSettings& pIOS );
 
 };
 

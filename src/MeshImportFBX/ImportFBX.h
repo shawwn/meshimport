@@ -2,8 +2,10 @@
 #define IMPORT_FBX_H
 
 #pragma warning(disable:4265)
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #include <fbxsdk.h>
-#include <fbxfilesdk/fbxfilesdk_nsuse.h>
+#pragma clang diagnostic pop
 #include <map>
 #include <vector>
 #include "UserMemAlloc.h"
@@ -18,10 +20,14 @@ using namespace NVSHARE;
 
 #pragma warning(disable: 4565)
 
+#ifdef WIN32
 #ifdef MESHIMPORTFBX_EXPORTS
 #define FBX_DLL_API extern "C" __declspec(dllexport)
 #else
 #define FBX_DLL_API extern "C" __declspec(dllimport)
+#endif
+#else
+#define FBX_DLL_API
 #endif
 
 namespace NVSHARE
@@ -74,10 +80,10 @@ public:
 	int clusterID;
 	const char* clusterName;
 	const char* boneName;
-	KFbxXMatrix bindPose;
+	FbxAMatrix bindPose;
 	NVSHARE::MeshBone* meshBone;
-	KFbxMesh *pMesh;
-	KFbxXMatrix globalPosition;
+	FbxMesh *pMesh;
+	FbxAMatrix globalPosition;
 	bool boneDataInitialized;
 	bool clusterInfoInitialized;
 	bool isRoot;
@@ -103,31 +109,31 @@ public:
 							NVSHARE::MeshImportApplicationResource *appResource);
 
 
-	void ProcessScene(KFbxNode *subScene = NULL);
+	void ProcessScene(FbxNode *subScene = NULL);
 
 	void ImportMesh();
 
 
 	void ImportSkeleton();
-	bool importSkeletonRecursive(KFbxNode* node, int parentBone, int& boneAllocator);	
+	bool importSkeletonRecursive(FbxNode* node, int parentBone, int& boneAllocator);
 	bool ImportAnimation();
 
-	//void AddSkeletonNode(KFbxNode* pNode, KTime& pTime, KFbxXMatrix& pParentGlobalPosition);
-    void AddMeshNode(KFbxNode* pNode);
+	//void AddSkeletonNode(FbxNode* pNode, FbxTime& pTime, FbxAMatrix& pParentGlobalPosition);
+    void AddMeshNode(FbxNode* pNode);
 	
 
 	int	mNumBones;
 
     // Utility
 
-	KFbxXMatrix GetGlobalPosition(KFbxNode* pNode, KTime& pTime, KFbxPose* pPose, KFbxXMatrix* pParentGlobalPosition = 0);
-	KFbxXMatrix GetGlobalPosition(KFbxNode* pNode, KTime& pTime, KFbxXMatrix& pParentGlobalPosition );
-	KFbxXMatrix GetPoseMatrix(KFbxPose* pPose, int pNodeIndex);
-	KFbxXMatrix GetGeometry(KFbxNode* pNode);
+	FbxAMatrix GetGlobalPosition(FbxNode* pNode, FbxTime& pTime, FbxPose* pPose, FbxAMatrix* pParentGlobalPosition = 0);
+	FbxAMatrix GetGlobalPosition(FbxNode* pNode, FbxTime& pTime, FbxAMatrix& pParentGlobalPosition );
+	FbxAMatrix GetPoseMatrix(FbxPose* pPose, int pNodeIndex);
+	FbxAMatrix GetGeometry(FbxNode* pNode);
 	
-	inline void MatrixScale(KFbxXMatrix& pMatrix, double pValue);
-	inline void MatrixAddToDiagonal(KFbxXMatrix& pMatrix, double pValue);
-	inline void MatrixAdd(KFbxXMatrix& pDstMatrix, KFbxXMatrix& pSrcMatrix);
+	inline void MatrixScale(FbxAMatrix& pMatrix, double pValue);
+	inline void MatrixAddToDiagonal(FbxAMatrix& pMatrix, double pValue);
+	inline void MatrixAdd(FbxAMatrix& pDstMatrix, FbxAMatrix& pSrcMatrix);
 	
 	const char* getFileName( const char* fullPath);
 
@@ -139,31 +145,31 @@ public:
 	StringDict									meshStrings;
 	NVSHARE::MeshSkeleton					meshSkeleton;
 	std::vector<NVSHARE::MeshBone>			meshBones;
-	std::vector<KFbxNode*>						meshNodes;
-	std::vector<KFbxXMatrix>					meshWorldBindPoseXforms;
-	std::vector<KFbxXMatrix>					meshWorldBindShapeXforms;
-	std::vector<KFbxXMatrix>					meshWorldAnimXforms;
+	std::vector<FbxNode*>						meshNodes;
+	std::vector<FbxAMatrix>					meshWorldBindPoseXforms;
+	std::vector<FbxAMatrix>					meshWorldBindShapeXforms;
+	std::vector<FbxAMatrix>					meshWorldAnimXforms;
 	NVSHARE::MeshAnimation					meshAnimation;
 	std::vector<NVSHARE::MeshAnimTrack*>		meshTrackPtrs;
 	std::vector<NVSHARE::MeshAnimTrack>		meshTracks;
 	std::vector<NVSHARE::MeshAnimPose>		meshPoses;
 
 
-	inline void GetBindPoseMatrix(KFbxCluster *lCluster, KFbxXMatrix& bindPose);
-	inline void GetBindShapeMatrix( KFbxCluster *lCluster, KFbxXMatrix& bindShape);
-	void ApplyVertexTransform(KFbxMesh* pMesh, NVSHARE::MeshVertex *pVerts);
+	inline void GetBindPoseMatrix(FbxCluster *lCluster, FbxAMatrix& bindPose);
+	inline void GetBindShapeMatrix( FbxCluster *lCluster, FbxAMatrix& bindShape);
+	void ApplyVertexTransform(FbxMesh* pMesh, NVSHARE::MeshVertex *pVerts);
 	
-	void ConvertNurbsAndPatch(KFbxSdkManager* pSdk, KFbxScene* pScene);
+	void ConvertNurbsAndPatch(FbxManager* pSdk, FbxScene* pScene);
 
-    void ConvertNurbsAndPatchRecursive(KFbxSdkManager* pSdk, 
-		                                      KFbxScene* pScene, KFbxNode* pNode);
+    void ConvertNurbsAndPatchRecursive(FbxManager* pSdk,
+		                                      FbxScene* pScene, FbxNode* pNode);
 
 
-    //void LoadTexture(KFbxTexture* pTexture, KArrayTemplate<VSTexture*>& pTextureArray);
+    //void LoadTexture(FbxTexture* pTexture, FbxArray<VSTexture*>& pTextureArray);
 
-	//void LoadSupportedTexturesRecursive(KFbxNode *pNode, KArrayTemplate<VSTexture*>& pTextureArray);
+	//void LoadSupportedTexturesRecursive(FbxNode *pNode, FbxArray<VSTexture*>& pTextureArray);
 
-	//void LoadSupportedTextures(KFbxScene *pScene, KArrayTemplate<VSTexture*>& pTextureArray);
+	//void LoadSupportedTextures(FbxScene *pScene, FbxArray<VSTexture*>& pTextureArray);
 
 	bool getClusterByIndex(int j, ClusterBoneMap** pose)
 	{
@@ -250,7 +256,7 @@ public:
 		return ret;
 
 	}
-	bool getBoneBindPose(const char *name, KFbxMatrix& bindPose)
+	bool getBoneBindPose(const char *name, FbxAMatrix& bindPose)
 	{
 		bool ret = false;
 
@@ -315,7 +321,7 @@ public:
 
 	}
 
-	void updateBone(const char* name, NVSHARE::MeshBone *newBone, KFbxXMatrix& pGlobalPosition)
+	void updateBone(const char* name, NVSHARE::MeshBone *newBone, FbxAMatrix& pGlobalPosition)
 	{
 		ClusterBoneMap* pose;
 
@@ -337,7 +343,7 @@ public:
 
 	}
 	
-	//void addBoneInfo(const char *name, NVSHARE::MeshBone* newBone, KFbxXMatrix& globalPos, bool isRoot)
+	//void addBoneInfo(const char *name, NVSHARE::MeshBone* newBone, FbxAMatrix& globalPos, bool isRoot)
 	//{
 	//	
 	//	
@@ -393,30 +399,30 @@ private:
 
 
 	
-	KString						m_fileName;
-	KString						m_filePath;
+	FbxString						m_fileName;
+	FbxString						m_filePath;
 
 	
 
-	KFbxSdkManager*				m_sdkManager;
-	KFbxImporter*				m_importer;
-	KFbxScene*					m_scene;
-	KFbxTakeInfo*				m_takeInfo;
-	KString*					m_takeName;
+	FbxManager*				m_sdkManager;
+	FbxImporter*				m_importer;
+	FbxScene*					m_scene;
+	FbxTakeInfo*				m_takeInfo;
+	FbxString*					m_takeName;
 
-	KArrayTemplate<KFbxNode*>	m_cameraArray;
-	KArrayTemplate<KString*>	m_takeNameArray;
-	KArrayTemplate<KFbxPose*>	m_poseArray;
-	KArrayTemplate<VSTexture*>	m_textureArray;
-    KArrayTemplate<KFbxSurfaceMaterial*> m_MaterialArray;
+	FbxArray<FbxNode*>	m_cameraArray;
+	FbxArray<FbxString*>	m_takeNameArray;
+	FbxArray<FbxPose*>	m_poseArray;
+	FbxArray<VSTexture*>	m_textureArray;
+    FbxArray<FbxSurfaceMaterial*> m_MaterialArray;
 
 
-	KTime						m_period;
+	FbxTime						m_period;
 
-	unsigned __int32			m_vertexCount;
-	unsigned __int32			m_vertexUVCount;
-	unsigned __int32			m_triangleCount;
-	unsigned __int32			m_meshDataTypes;
+	uint32_t			m_vertexCount;
+	uint32_t			m_vertexUVCount;
+	uint32_t			m_triangleCount;
+	uint32_t			m_meshDataTypes;
 
 };
 

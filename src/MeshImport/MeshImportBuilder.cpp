@@ -862,61 +862,61 @@ public:
     }
   }
 
-  virtual void scale(NxF32 s)
+  virtual void scale(NxF32 scaleX,NxF32 scaleY,NxF32 scaleZ)
   {
-    {
-      MeshSkeletonVector::iterator i;
-      for (i=mMySkeletons.begin(); i!=mMySkeletons.end(); ++i)
       {
-        MeshSkeleton *ms = (*i);
-        for (NxI32 j=0; j<ms->mBoneCount; j++)
-        {
-          MeshBone &b = ms->mBones[j];
-          b.mPosition[0]*=s;
-          b.mPosition[1]*=s;
-          b.mPosition[2]*=s;
-        }
-      }
-    }
-
-    {
-      MyMeshVector::iterator i;
-      for (i=mMyMeshes.begin(); i!=mMyMeshes.end(); ++i)
-      {
-        MyMesh *m = (*i);
-        NxU32 vcount = m->mVertexPool.GetSize();
-        if ( vcount > 0 )
-        {
-          MeshVertex *vb = m->mVertexPool.GetBuffer();
-          for (NxU32 j=0; j<vcount; j++)
+          MeshSkeletonVector::iterator i;
+          for (i=mMySkeletons.begin(); i!=mMySkeletons.end(); ++i)
           {
-            vb->mPos[0]*=s;
-            vb->mPos[1]*=s;
-            vb->mPos[2]*=s;
-            vb++;
+              MeshSkeleton *ms = (*i);
+              for (NxI32 j=0; j<ms->mBoneCount; j++)
+              {
+                  MeshBone &b = ms->mBones[j];
+                  b.mPosition[0]*=scaleX;
+                  b.mPosition[1]*=scaleY;
+                  b.mPosition[2]*=scaleZ;
+              }
           }
-        }
       }
-    }
 
-    {
-      MeshAnimationVector::iterator i;
-      for (i=mMyAnimations.begin(); i!=mMyAnimations.end(); ++i)
       {
-        MeshAnimation *ma = (*i);
-        for (NxI32 j=0; j<ma->mTrackCount; j++)
-        {
-          MeshAnimTrack *t = ma->mTracks[j];
-          for (NxI32 k=0; k<t->mFrameCount; k++)
+          MyMeshVector::iterator i;
+          for (i=mMyMeshes.begin(); i!=mMyMeshes.end(); ++i)
           {
-            MeshAnimPose &p = t->mPose[k];
-            p.mPos[0]*=s;
-            p.mPos[1]*=s;
-            p.mPos[2]*=s;
+              MyMesh *m = (*i);
+              NxU32 vcount = m->mVertexPool.GetSize();
+              if ( vcount > 0 )
+              {
+                  MeshVertex *vb = m->mVertexPool.GetBuffer();
+                  for (NxU32 j=0; j<vcount; j++)
+                  {
+                      vb->mPos[0]*=scaleX;
+                      vb->mPos[1]*=scaleY;
+                      vb->mPos[2]*=scaleZ;
+                      vb++;
+                  }
+              }
           }
-        }
       }
-    }
+
+      {
+          MeshAnimationVector::iterator i;
+          for (i=mMyAnimations.begin(); i!=mMyAnimations.end(); ++i)
+          {
+              MeshAnimation *ma = (*i);
+              for (NxI32 j=0; j<ma->mTrackCount; j++)
+              {
+                  MeshAnimTrack *t = ma->mTracks[j];
+                  for (NxI32 k=0; k<t->mFrameCount; k++)
+                  {
+                      MeshAnimPose &p = t->mPose[k];
+                      p.mPos[0]*=scaleX;
+                      p.mPos[1]*=scaleY;
+                      p.mPos[2]*=scaleZ;
+                  }
+              }
+          }
+      }
   }
 
   virtual NxI32 getSerializeFrame(void)

@@ -48,40 +48,21 @@ static void *getMeshBindingInterface(const char *dll,NxI32 version_number) // lo
 #elif 1
 #include <dlfcn.h>
 
-#ifdef WIN32
-    #ifdef MESHIMPORT_EXPORTS
-#define MESHIMPORT_API __declspec(dllexport)
-#else
-#define MESHIMPORT_API __declspec(dllimport)
-#endif
-#else
-#define MESHIMPORT_API
-#endif
-
-extern "C"
+static void *getMeshBindingInterface(const char *dll,NxI32 version_number) // loads the tetra maker DLL and returns the interface pointer.
 {
-MESHIMPORT_API NVSHARE::MeshImport * getInterface(NxI32 version_number);
-};
+    void *ret = nullptr;
 
-static void *getMeshBindingInterface(const char *dll,NxI32 version_number,bool dynamic = true) // loads the tetra maker DLL and returns the interface pointer.
-{
-    if (dynamic)
+    void* module = dlopen(dll, RTLD_NOW);
+    if ( module )
     {
-        void *ret = 0;
-
-        void* module = dlopen(dll, RTLD_NOW);
-        if ( module )
+        void *proc = dlsym(module,"getInterface");
+        if ( proc )
         {
-            void *proc = dlsym(module,"getInterface");
-            if ( proc )
-            {
-                typedef void * (__cdecl * NX_GetToolkit)(NxI32 version);
-                ret = ((NX_GetToolkit)proc)(version_number);
-            }
+            typedef void * (__cdecl * NX_GetToolkit)(NxI32 version);
+            ret = ((NX_GetToolkit)proc)(version_number);
         }
-        return ret;
     }
-    return getInterface(version_number);
+    return ret;
 }
 #endif
 
@@ -90,41 +71,12 @@ static void *getMeshBindingInterface(const char *dll,NxI32 version_number,bool d
 #ifdef LINUX_GENERIC
 #include <sys/types.h>
 #include <sys/dir.h>
+#include <fnmatch.h>
 #endif
 
 #define MAXNAME 512
 
 #define MESHIMPORT_NVSHARE MESHIMPORT_##NVSHARE
-
-#ifdef LINUX_GENERIC
-#include <glob.h>
-#include <fnmatch.h>
-#include <vector>
-#include <string>
-namespace MESHIMPORT_NVSHARE
-{
-
-std::vector<std::string> glob(const std::string& pattern) {
-    glob_t glob_result = {0}; // zero initialize
-
-    // do the glob operation
-    int return_value = ::glob(pattern.c_str(), GLOB_TILDE, NULL, &glob_result);
-
-    if(return_value != 0) throw std::runtime_error(std::strerror(errno));
-
-    // collect all the filenames into a std::vector<std::string>
-    // using the vector constructor that takes two iterators
-    std::vector<std::string> filenames(
-        glob_result.gl_pathv, glob_result.gl_pathv + glob_result.gl_pathc);
-
-    // cleanup
-    globfree(&glob_result);
-
-    // done
-    return filenames;
-}
-}
-#endif
 
 namespace MESHIMPORT_NVSHARE
 {
@@ -135,41 +87,40 @@ public:
   FileFind(const char *dirname,const char *spec)
   {
     if ( dirname && strlen(dirname) )
-      snprintf(mSearchName,sizeof(mSearchName),"%s%c%s",dirname,pathsep,spec);
+      snprintf(mSearchDir, sizeof(mSearchDir), "%s%c", dirname, pathsep);
     else
-      snprintf(mSearchName,sizeof(mSearchName),"%s",spec);
-#ifdef LINUX_GENERIC
-    snprintf(mSearchPattern,sizeof(mSearchPattern),"%s",spec);
-#endif
+      strncpy(mSearchDir, "%s%c", sizeof(mSearchDir));
+    strncpy(mSearchName, spec, sizeof(mSearchName));
    }
 
-  ~FileFind(void)
-  {
-  }
 
-
-  bool FindFirst(char *name)
+  bool FindFirst(char *name, size_t namelen)
   {
     bool ret=false;
 
     #ifdef WIN32
-    hFindNext = FindFirstFileA(mSearchName, &finddata);
+    char searchName[MAXNAME] = {};
+    if ( strlen(mSearchDir) )
+      snprintf(searchName,sizeof(searchName),"%s%c%s",mSearchDir,pathsep,mSearchName);
+    else
+      snprintf(searchName,sizeof(searchName),"%s",mSearchName);
+    hFindNext = FindFirstFileA(searchName, &finddata);
     if ( hFindNext == INVALID_HANDLE_VALUE )
       ret =  false;
      else
      {
        bFound = 1; // have an initial file to check.
-       ret =  FindNext(name);
+       ret =  FindNext(name, namelen);
      }
      #endif
      #ifdef LINUX_GENERIC
-     mDir = opendir(".");
-     ret = FindNext(name);
+     mDir = opendir(mSearchDir);
+     ret = FindNext(name, namelen);
     #endif
     return ret;
   }
 
-  bool FindNext(char *name)
+  bool FindNext(char *name, size_t namelen)
   {
     bool ret = false;
 
@@ -179,7 +130,7 @@ public:
       bFound = FindNextFileA(hFindNext, &finddata);
       if ( bFound && (finddata.cFileName[0] != '.') && !(finddata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) )
       {
-        strncpy(name,finddata.cFileName,MAXNAME);
+        strncpy(name,finddata.cFileName,namelen);
         ret = true;
         break;
       }
@@ -203,7 +154,7 @@ public:
         if ( !di )
         {
           closedir( mDir );
-          mDir = 0;
+          mDir = nullptr;
           ret = false;
           break;
         }
@@ -214,7 +165,7 @@ public:
         }
         else
         {
-          bool found = !fnmatch(mSearchPattern, di->d_name, FNM_PATHNAME);
+          bool found = !fnmatch(mSearchName, di->d_name, 0);
           if (!found)
           {
               // skip it!
@@ -222,7 +173,7 @@ public:
           }
           else
           {
-              strncpy(name,di->d_name,MAXNAME);
+              snprintf(name, namelen, "%s%s", mSearchDir, di->d_name);
               ret = true;
               break;
           }
@@ -234,14 +185,15 @@ public:
   }
 
 private:
-  char mSearchName[MAXNAME];
+  char mSearchName[MAXNAME] = {};
 #ifdef WIN32
   WIN32_FIND_DATAA finddata;
   HANDLE hFindNext;
   NxI32 bFound;
 #endif
 #ifdef LINUX_GENERIC
-  char mSearchPattern[MAXNAME];
+  char mSearchDir[MAXNAME] = {};
+  char mSearchPattern[MAXNAME] = {};
   DIR      *mDir;
 #endif
 };
@@ -271,11 +223,11 @@ static const char *lastSlash(const char *foo)
 
 NVSHARE::MeshImport * loadMeshImporters(const char * directory) // loads the mesh import library (dll) and all available importers from the same directory.
 {
-  NVSHARE::MeshImport *ret = 0;
+  NVSHARE::MeshImport *ret = nullptr;
 #if defined(WIN32)
   const char * baseImporter = "MeshImport.dll";
 #elif defined(__APPLE__)
-    const char * baseImporter = "libMeshImport.dylib";
+  const char * baseImporter = "libMeshImport.dylib";
 #else
   const char * baseImporter = "libMeshImport.so";
 #endif
@@ -290,11 +242,7 @@ NVSHARE::MeshImport * loadMeshImporters(const char * directory) // loads the mes
     strcpy(scratch,baseImporter);
   }
 
-#if defined(WIN32)
   ret = (NVSHARE::MeshImport *)getMeshBindingInterface(scratch,MESHIMPORT_VERSION);
-#else
-  ret = (NVSHARE::MeshImport *)getMeshBindingInterface(nullptr,MESHIMPORT_VERSION);
-#endif
 
   if ( ret )
   {
@@ -305,8 +253,8 @@ NVSHARE::MeshImport * loadMeshImporters(const char * directory) // loads the mes
 #else
       NVSHARE::FileFind ff(directory,"libMeshImport*.so");
 #endif
-    char name[MAXNAME];
-    if ( ff.FindFirst(name) )
+    char name[MAXNAME] = {};
+    if ( ff.FindFirst(name, MAXNAME) )
     {
       do
       {
@@ -337,7 +285,7 @@ NVSHARE::MeshImport * loadMeshImporters(const char * directory) // loads the mes
             printf("Added importer '%s'\r\n", name );
           }
         }
-      } while ( ff.FindNext(name) );
+      } while ( ff.FindNext(name, MAXNAME) );
     }
   }
   return ret;

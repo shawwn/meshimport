@@ -3,7 +3,7 @@
 
 /**************************************************************************************
 
- Copyright © 2001 - 2008 Autodesk, Inc. and/or its licensors.
+ Copyright ï¿½ 2001 - 2008 Autodesk, Inc. and/or its licensors.
  All Rights Reserved.
 
  The coded instructions, statements, computer programs, and/or related material
@@ -36,7 +36,7 @@
 
 **************************************************************************************/
 
-#include <fbxfilesdk/kfbxplugins/kfbxtexture.h>
+//#include <fbxfilesdk/Fbxplugins/Fbxtexture.h>
 #include "UserMemAlloc.h"
 
 namespace NVSHARE
@@ -60,7 +60,7 @@ class VSTexture
 		unsigned int   mW;
 		unsigned int   mH;
 		unsigned char* mImageData;
-		KFbxTexture*   mRefTexture;
+		FbxTexture*   mRefTexture;
 };
 
 }; // end of namespace

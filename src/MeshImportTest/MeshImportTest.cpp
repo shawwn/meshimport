@@ -103,32 +103,41 @@ void demonstrateMeshExporting(NVSHARE::MeshImport *meshImportLibrary)
 
 int main(int argc,const char **argv)
 {
+    char mesh[MAX_PATH] = {"ClothSim.ezm"};
+    if (argc >= 1)
+        strncpy(mesh, argv[1], sizeof(mesh));
 
+    const char *dirname = nullptr;
+    char prevcwd[MAX_PATH];
+    getcwd(prevcwd, MAX_PATH);
+
+    char strExePath [MAX_PATH];
 #ifdef WIN32
-	const char *dirname = 0;
-
-	char strExePath [MAX_PATH];
-	GetModuleFileNameA(NULL, strExePath, MAX_PATH);
-
-	char *slash = (char *)lastSlash(strExePath);
-	if ( slash )
-	{
-		*slash = 0;
-		dirname = strExePath;
-	}
-
-	_chdir(dirname);
+    GetModuleFileNameA(NULL, strExePath, MAX_PATH);
 #else
-    const char *dirname = getenv("PWD");
+    strcpy(strExePath, argv[0]);
 #endif
-    printf("dirname=%s\r\n", dirname );
+
+    char *slash = (char *)lastSlash(strExePath);
+    if ( slash )
+    {
+        *slash = 0;
+        dirname = strExePath;
+    }
+    assert(dirname != nullptr);
+    printf("dirname=%s\n", dirname );
 
 	NVSHARE::MeshImport *meshImportLibrary = NVSHARE::loadMeshImporters(dirname); // load the mesh import dll and associated importers
 
 	if ( meshImportLibrary )
 	{
-		FILE *fph = fopen("clothsim.ezm","rb");  // read in an EZ-Mesh
-		if ( fph )
+		FILE *fph = fopen(mesh,"rb");  // read in an EZ-Mesh
+		if ( !fph )
+        {
+            fprintf(stderr, "no such file %s\n", mesh);
+            return 1;
+        }
+        else
 		{
 			fseek(fph,0L,SEEK_END);
 			NxU32 dlen = ftell(fph);
@@ -137,12 +146,12 @@ int main(int argc,const char **argv)
 			{
 				char *data = (char *)::malloc(dlen);
 				fread(data,dlen,1,fph);
-				NVSHARE::MeshSystemContainer *msc = meshImportLibrary->createMeshSystemContainer("clothsim.ezm",data,dlen,0);
+				NVSHARE::MeshSystemContainer *msc = meshImportLibrary->createMeshSystemContainer(mesh,data,dlen,nullptr);
 				::free(data);
 				if ( msc )
 				{
 					NVSHARE::MeshSystem *ms = meshImportLibrary->getMeshSystem(msc);
-					printf("The mesh system has now been imported.  You can operate on the data now here.\n");
+					fprintf(stderr, "%s has now been imported.  You can operate on the data now here.\n", mesh);
 
 
 					demonstrateMeshExporting(meshImportLibrary);
@@ -151,7 +160,7 @@ int main(int argc,const char **argv)
 				}
 				else
 				{
-					printf("Failed to create mesh system.\n");
+					fprintf(stderr, "Failed to import %s\n", mesh);
 				}
 			}
 			fclose(fph);
@@ -159,7 +168,7 @@ int main(int argc,const char **argv)
 	}
 	else
 	{
-		printf("Failed to load MeshImport.dll\n");
+		printf("Failed to load MeshImport library\n");
 	}
     return 0;
 }
