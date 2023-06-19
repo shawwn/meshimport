@@ -110,7 +110,9 @@ union NxU32F32
 };
 
 #if __APPLE__
+#if __ppc__
     NX_COMPILE_TIME_ASSERT(sizeof(bool)==4);    // PPC has 4 byte bools
+#endif
 #else
 	NX_COMPILE_TIME_ASSERT(sizeof(bool)==1);	// ...otherwise things might fail with VC++ 4.2 !
 #endif

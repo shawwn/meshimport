@@ -52,7 +52,7 @@
 
 */
 #pragma warning(disable:4996)
-#include "safestdio.h"
+#include "safeStdio.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -336,6 +336,7 @@ const char * FloatString(NxF32 v,bool binary)
 	static NxI32  index=0;
 
 	char *ret = &data[index*64];
+	const size_t retMax	=	sizeof(data);
 	index++;
 	if (index == 16 ) index = 0;
 
@@ -371,11 +372,11 @@ const char * FloatString(NxF32 v,bool binary)
 		if ( binary )
 		{
 			NxU32 *iv = (NxU32 *) &v;
-			sprintf(ret,"%.4f$%x", v, *iv );
+			snprintf(ret,retMax,"%.4f$%x", v, *iv );
 		}
 		else
 		{
-			sprintf(ret,"%.9f", v );
+			snprintf(ret,retMax,"%.9f", v );
 			const char *dot = strstr(ret,".");
 			if ( dot )
 			{
@@ -411,7 +412,7 @@ NxI32 GetUserArgs(const char *us,const char *key,const char **args)
 	strcpy(arglist,us);
 
 	char keyword[512];
-	sprintf(keyword,"%s(", key );
+	snprintf(keyword,sizeof(keyword),"%s(", key );
 	char *found = strstr(arglist,keyword);
 	if ( found )
 	{
@@ -627,6 +628,7 @@ const char	*fstring(NxF32 v)
 	static NxI32 index = 0;
 
 	char *ret	=	&data[index	*64];
+	const size_t retMax	=	sizeof(data);
 	index++;
 	if (index	== 16)
 	{
@@ -657,7 +659,7 @@ const char	*fstring(NxF32 v)
 	}
 	else
 	{
-		sprintf(ret, "%.9f", v);
+		snprintf(ret,retMax, "%.9f", v);
 		const	char *dot	=	strstr(ret,	".");
 		if (dot)
 		{

@@ -20,15 +20,15 @@ DLL export macros
 #endif
 
 #ifndef NX_CALL_CONV
-	#if defined WIN32
+	#if defined(WIN32)
 		#define NX_CALL_CONV __cdecl
-	#elif defined LINUX
+	#elif defined(LINUX)
 		#define NX_CALL_CONV
-    #elif defined __APPLE__
+    #elif defined(__APPLE__)
         #define NX_CALL_CONV
-	#elif defined __CELLOS_LV2__
+	#elif defined(__CELLOS_LV2__)
 		#define NX_CALL_CONV
-	#elif defined _XBOX
+	#elif defined(_XBOX)
         #define NX_CALL_CONV
 	#elif defined(__PPCGEKKO__)
         #define NX_CALL_CONV
@@ -94,7 +94,7 @@ DLL export macros
  Nx SDK misc defines.
 */
 
-#define	NX_UNREFERENCED_PARAMETER(P) (P)
+#define	NX_UNREFERENCED_PARAMETER(P) (void)(P)
 
 //NX_INLINE
 #if (_MSC_VER>=1000)
@@ -264,10 +264,10 @@ enum NxSDKCreateError
 
 // Don't use inline for alloca !!!
 #ifdef WIN32
-	#include <malloc.h>
+	#include <stdlib.h>
 	#define NxAlloca(x)	_alloca(x)
 #elif LINUX
-	#include <malloc.h>
+	#include <stdlib.h>
 	#define NxAlloca(x)	alloca(x)
 #elif __APPLE__
 	#include <alloca.h>
@@ -278,7 +278,7 @@ enum NxSDKCreateError
 	#include <stdlib.h>
 	#define NxAlloca(x)	alloca(x)
 #elif _XBOX
-	#include <malloc.h>
+	#include <stdlib.h>
 	#define NxAlloca(x)	_alloca(x)
 #elif defined(__PPCGEKKO__)
 	#include <alloca.h>

@@ -6,16 +6,14 @@
 #pragma warning(disable:4995)
 #pragma warning(disable:4996)
 
-#include "safestdio.h"
+#include "safeStdio.h"
 #include <assert.h>
 #include <string.h>
 
 #include "UserMemAlloc.h"
 #include "NvHashMap.h"
 
-#if defined(LINUX)
-#define stricmp strcasecmp
-#endif
+#include "linux_compat.h"
 
 namespace NVSHARE
 {

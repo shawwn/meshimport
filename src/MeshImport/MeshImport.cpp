@@ -1,6 +1,7 @@
 #pragma warning(disable:4702) // disabling a warning that only shows up when building VC7
 #include <assert.h>
 #include <vector>
+#include <string>
 
 #include "MeshImport.h"
 #include "VtxWeld.h"
@@ -552,101 +553,101 @@ public:
 
     if ( flags & MIVF_POSITION )
     {
-      sprintf(temp,"%s %s %s ", FloatString(v.mPos[0]), FloatString(v.mPos[1]), FloatString(v.mPos[2]) );
+      snprintf(temp,sizeof(temp),"%s %s %s ", FloatString(v.mPos[0]), FloatString(v.mPos[1]), FloatString(v.mPos[2]) );
       strcat(scratch,temp);
     }
 
     if ( flags & MIVF_NORMAL )
     {
-      sprintf(temp,"%s %s %s ", FloatString(v.mNormal[0]), FloatString(v.mNormal[1]), FloatString(v.mNormal[2]) );
+      snprintf(temp,sizeof(temp),"%s %s %s ", FloatString(v.mNormal[0]), FloatString(v.mNormal[1]), FloatString(v.mNormal[2]) );
       strcat(scratch,temp);
     }
 
     if ( flags & MIVF_COLOR )
     {
-      sprintf(temp,"%08X ", v.mColor );
+      snprintf(temp,sizeof(temp),"%08X ", v.mColor );
       strcat(scratch,temp);
     }
     if ( flags & MIVF_TEXEL1 )
     {
-      sprintf(temp,"%s %s ", FloatString(v.mTexel1[0]), FloatString(v.mTexel1[1]) );
+      snprintf(temp,sizeof(temp),"%s %s ", FloatString(v.mTexel1[0]), FloatString(v.mTexel1[1]) );
       strcat(scratch,temp);
     }
     if ( flags & MIVF_TEXEL2 )
     {
-      sprintf(temp,"%s %s ", FloatString(v.mTexel2[0]), FloatString(v.mTexel2[1]) );
+      snprintf(temp,sizeof(temp),"%s %s ", FloatString(v.mTexel2[0]), FloatString(v.mTexel2[1]) );
       strcat(scratch,temp);
     }
     if ( flags & MIVF_TEXEL3 )
     {
-      sprintf(temp,"%s %s ", FloatString(v.mTexel3[0]), FloatString(v.mTexel3[1]) );
+      snprintf(temp,sizeof(temp),"%s %s ", FloatString(v.mTexel3[0]), FloatString(v.mTexel3[1]) );
       strcat(scratch,temp);
     }
     if ( flags & MIVF_TEXEL4 )
     {
-      sprintf(temp,"%s %s ", FloatString(v.mTexel4[0]), FloatString(v.mTexel4[1]) );
+      snprintf(temp,sizeof(temp),"%s %s ", FloatString(v.mTexel4[0]), FloatString(v.mTexel4[1]) );
       strcat(scratch,temp);
     }
     if ( flags & MIVF_TANGENT )
     {
-      sprintf(temp,"%s %s %s ", FloatString(v.mTangent[0]), FloatString(v.mTangent[1]), FloatString(v.mTangent[2]) );
+      snprintf(temp,sizeof(temp),"%s %s %s ", FloatString(v.mTangent[0]), FloatString(v.mTangent[1]), FloatString(v.mTangent[2]) );
       strcat(scratch,temp);
     }
     if ( flags & MIVF_BINORMAL )
     {
-      sprintf(temp,"%s %s %s ", FloatString(v.mBiNormal[0]), FloatString(v.mBiNormal[1]), FloatString(v.mBiNormal[2]) );
+      snprintf(temp,sizeof(temp),"%s %s %s ", FloatString(v.mBiNormal[0]), FloatString(v.mBiNormal[1]), FloatString(v.mBiNormal[2]) );
       strcat(scratch,temp);
     }
     if ( flags & MIVF_BONE_WEIGHTING )
     {
-      sprintf(temp,"%s %s %s %s ", FloatString(v.mWeight[0]), FloatString(v.mWeight[1]), FloatString(v.mWeight[2]), FloatString(v.mWeight[3]) );
+      snprintf(temp,sizeof(temp),"%s %s %s %s ", FloatString(v.mWeight[0]), FloatString(v.mWeight[1]), FloatString(v.mWeight[2]), FloatString(v.mWeight[3]) );
       strcat(scratch,temp);
-      sprintf(temp,"%d %d %d %d ", v.mBone[0], v.mBone[1], v.mBone[2], v.mBone[3] );
+      snprintf(temp,sizeof(temp),"%d %d %d %d ", v.mBone[0], v.mBone[1], v.mBone[2], v.mBone[3] );
       strcat(scratch,temp);
     }
     if ( flags & MIVF_INTERP1 )
     {
-      sprintf(temp,"%s %s %s ", FloatString(v.mInterp1[0]), FloatString(v.mInterp1[1]), FloatString(v.mInterp1[2]) , FloatString(v.mInterp1[3]));
+      snprintf(temp,sizeof(temp),"%s %s %s %s ", FloatString(v.mInterp1[0]), FloatString(v.mInterp1[1]), FloatString(v.mInterp1[2]) , FloatString(v.mInterp1[3]));
       strcat(scratch,temp);
     }
     if ( flags & MIVF_INTERP2 )
     {
-      sprintf(temp,"%s %s %s ", FloatString(v.mInterp2[0]), FloatString(v.mInterp2[1]), FloatString(v.mInterp2[2]) , FloatString(v.mInterp2[3]));
+      snprintf(temp,sizeof(temp),"%s %s %s %s ", FloatString(v.mInterp2[0]), FloatString(v.mInterp2[1]), FloatString(v.mInterp2[2]) , FloatString(v.mInterp2[3]));
       strcat(scratch,temp);
     }
     if ( flags & MIVF_INTERP3 )
     {
-      sprintf(temp,"%s %s %s ", FloatString(v.mInterp3[0]), FloatString(v.mInterp3[1]), FloatString(v.mInterp3[2]) , FloatString(v.mInterp3[3]));
+      snprintf(temp,sizeof(temp),"%s %s %s %s ", FloatString(v.mInterp3[0]), FloatString(v.mInterp3[1]), FloatString(v.mInterp3[2]) , FloatString(v.mInterp3[3]));
       strcat(scratch,temp);
     }
     if ( flags & MIVF_INTERP4 )
     {
-      sprintf(temp,"%s %s %s ", FloatString(v.mInterp4[0]), FloatString(v.mInterp4[1]), FloatString(v.mInterp4[2]) , FloatString(v.mInterp4[3]));
+      snprintf(temp,sizeof(temp),"%s %s %s %s ", FloatString(v.mInterp4[0]), FloatString(v.mInterp4[1]), FloatString(v.mInterp4[2]) , FloatString(v.mInterp4[3]));
       strcat(scratch,temp);
     }
     if ( flags & MIVF_INTERP5 )
     {
-      sprintf(temp,"%s %s %s ", FloatString(v.mInterp5[0]), FloatString(v.mInterp5[1]), FloatString(v.mInterp5[2]) , FloatString(v.mInterp5[3]));
+      snprintf(temp,sizeof(temp),"%s %s %s %s ", FloatString(v.mInterp5[0]), FloatString(v.mInterp5[1]), FloatString(v.mInterp5[2]) , FloatString(v.mInterp5[3]));
       strcat(scratch,temp);
     }
     if ( flags & MIVF_INTERP6 )
     {
-      sprintf(temp,"%s %s %s ", FloatString(v.mInterp6[0]), FloatString(v.mInterp6[1]), FloatString(v.mInterp6[2]) , FloatString(v.mInterp6[3]));
+      snprintf(temp,sizeof(temp),"%s %s %s %s ", FloatString(v.mInterp6[0]), FloatString(v.mInterp6[1]), FloatString(v.mInterp6[2]) , FloatString(v.mInterp6[3]));
       strcat(scratch,temp);
     }
     if ( flags & MIVF_INTERP7 )
     {
-      sprintf(temp,"%s %s %s ", FloatString(v.mInterp7[0]), FloatString(v.mInterp7[1]), FloatString(v.mInterp7[2]) , FloatString(v.mInterp7[3]));
+      snprintf(temp,sizeof(temp),"%s %s %s %s ", FloatString(v.mInterp7[0]), FloatString(v.mInterp7[1]), FloatString(v.mInterp7[2]) , FloatString(v.mInterp7[3]));
       strcat(scratch,temp);
     }
     if ( flags & MIVF_INTERP8 )
     {
-      sprintf(temp,"%s %s %s ", FloatString(v.mInterp8[0]), FloatString(v.mInterp8[1]), FloatString(v.mInterp8[2]) , FloatString(v.mInterp8[3]));
+      snprintf(temp,sizeof(temp),"%s %s %s %s ", FloatString(v.mInterp8[0]), FloatString(v.mInterp8[1]), FloatString(v.mInterp8[2]) , FloatString(v.mInterp8[3]));
       strcat(scratch,temp);
     }
     if ( flags & MIVF_RADIUS )
     {
-      sprintf(temp,"%s ", FloatString(v.mRadius) );
+      snprintf(temp,sizeof(temp),"%s ", FloatString(v.mRadius) );
       strcat(scratch,temp);
     }
     strcat(scratch,",    ");
@@ -670,7 +671,7 @@ public:
       fi_fprintf(fph,"          ");
     }
     char temp[1024];
-    sprintf(temp,"%d %d %d,  ", idx[0], idx[1], idx[2] );
+    snprintf(temp,sizeof(temp),"%d %d %d,  ", idx[0], idx[1], idx[2] );
     fi_fprintf(fph,"%s",temp);
     NxU32 slen = (NxU32)strlen(temp);
     column+=slen;
@@ -751,6 +752,7 @@ public:
       case MCT_SPHERE: ret = "SPHERE"; break;
       case MCT_CAPSULE: ret = "CAPSULE"; break;
       case MCT_CONVEX: ret = "CONVEX"; break;
+      case MCT_LAST: assert(false); break;
     }
     return ret;
   }
@@ -864,6 +866,9 @@ public:
           MeshCollisionConvex *b = static_cast< MeshCollisionConvex *>(m);
           print(fph,b);
         }
+        break;
+      case MCT_LAST:
+        assert(false);
         break;
     }
 

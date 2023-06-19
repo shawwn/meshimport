@@ -415,6 +415,9 @@ void * Asc2Bin(const char *source,const NxI32 count,const char *spec,void *dest)
 						dst+=sizeof(NxU32);
 					}
 					break;
+            case AT_LAST:
+                assert(false);
+                break;
 			}
 		}
 	}

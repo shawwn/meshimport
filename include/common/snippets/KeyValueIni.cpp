@@ -48,7 +48,7 @@
 ** CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 */
-#include "safestdio.h"
+#include "safeStdio.h"
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
@@ -372,7 +372,9 @@ size_t        fi_fprintf(FILE_INTERFACE *fph,const char *fmt,...)
 
 	char buffer[2048];
   buffer[2047] = 0;
-	_vsnprintf(buffer,2047, fmt, (char *)(&fmt+1));
+    va_list va;
+    va_start(va, fmt);
+	_vsnprintf(buffer,2047, fmt, va);
 
 	if ( fph )
 	{

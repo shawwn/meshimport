@@ -106,10 +106,10 @@ inline void * inline_realloc(void *oldMem,size_t newSize,const char *typeName,co
 
 
 #ifdef NX_WINDOWS
-#include <malloc.h>
+#include <stdlib.h>
 #define MEMALLOC_ALLOCA(x)	_alloca(x)
 #elif defined(NX_LINUX)
-#include <malloc.h>
+#include <stdlib.h>
 #define MEMALLOC_ALLOCA(x)	alloca(x)
 #elif defined(NX_APPLE)
 #include <alloca.h>
@@ -120,7 +120,7 @@ inline void * inline_realloc(void *oldMem,size_t newSize,const char *typeName,co
 #include <stdlib.h>
 #define MEMALLOC_ALLOCA(x)	alloca(x)
 #elif defined(NX_X360)
-#include <malloc.h>
+#include <stdlib.h>
 #define MEMALLOC_ALLOCA(x)	_alloca(x)
 #elif defined(NX_WII)
 #include <alloca.h>

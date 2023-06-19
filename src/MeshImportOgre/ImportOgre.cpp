@@ -590,6 +590,8 @@ public:
         break;
   	  case NE_VERTEX_BONE_ASSIGNMENT:
         break;
+    default:
+        break;
     }
 	}
 
@@ -1019,6 +1021,10 @@ public:
         assert(mTextureCoords==1);
         break;
 
+      case NA_EMPTY:
+      case NA_LAST:
+        assert(false);
+        break;
     }
 
 	}

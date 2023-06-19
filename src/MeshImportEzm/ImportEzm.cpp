@@ -62,8 +62,8 @@
 #include <stdarg.h>
 #include "UserMemAlloc.h"
 #include "MeshImport.h"
-#include "ImportEZM.h"
-#include "StringDict.h"
+#include "ImportEzm.h"
+#include "stringdict.h"
 #include "sutil.h"
 #include "stable.h"
 #include "asc2bin.h"
@@ -719,6 +719,8 @@ public:
 					mBone = mSkeleton->GetBonePtr(mBoneIndex);
 				}
 				break;
+          default:
+            break;
 		}
   }
   void ProcessData(const char *svalue)
@@ -930,6 +932,8 @@ public:
 			  mIndexBuffer = 0;
 			  mIndexCount = 0;
 			  break;
+          default:
+              break;
 		  }
 	  }
   }
@@ -1029,6 +1033,8 @@ public:
               mMeshCollisionRepresentation->mInfo = mStrings.Get(savalue).Get();
             }
             break;
+          default:
+            break;
         }
         break;
       case AT_TRANSFORM:
@@ -1047,6 +1053,8 @@ public:
 
 				switch ( mType )
 				{
+                case NT_NONE:
+                    break;
 				case NT_MESH_COLLISION:
 					assert( mMeshCollision );
 					if ( mMeshCollision )
@@ -1077,6 +1085,8 @@ public:
 						mBone->SetName(mStrings.Get(savalue).Get());
 					}
 					break;
+                default:
+                    break;
 				}
 				break;
       case AT_TRIANGLE_COUNT:
@@ -1120,6 +1130,16 @@ public:
 			case AT_SEMANTIC:
 				mSemantic = savalue;
 				break;
+        case AT_MIN:
+        case AT_MAX:
+        case AT_META_DATA:
+        case AT_SKELETON:
+        case AT_SUBMESH_COUNT:
+            break;
+        case AT_TYPE:
+        case AT_LAST:
+            assert(false);
+            break;
 		}
 
 	}

@@ -1,8 +1,12 @@
-#include "safestdio.h"
+#include "safeStdio.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
 #include <assert.h>
+
+#if defined(LINUX)
+#include "linux_compat.h"
+#endif
 
 #include "UserMemAlloc.h"
 #pragma warning(disable:4267)
@@ -528,7 +532,9 @@ size_t        fi_fprintf(FILE_INTERFACE *_fph,const char *fmt,...)
 
 	char buffer[2048];
   buffer[2047] = 0;
-	_vsnprintf(buffer,2047, fmt, (char *)(&fmt+1));
+  va_list va;
+  va_start(va, fmt);
+	_vsnprintf(buffer,2047, fmt, va);
 
 	if ( fph )
 	{

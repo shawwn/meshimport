@@ -20,12 +20,13 @@
 #include <stdio.h>
 #include <string.h>
 #include <float.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <math.h>
 #include <assert.h>
 
 #if 1
 #include "UserMemAlloc.h"
+#include "linux_compat.h"
 #else
 typedef float NxF32;
 typedef int   NxI32;
@@ -740,10 +741,11 @@ public:
 			  out[3] = fa;
 		  }
 		  return 4;
+	default:
+		assert(!"MeshVertex::get(): specified MeshVertex attribute is invalid.");
+		out[0] = out[1] = out[2] = out[3] = 0;
+		return 0;
 	  }
-	  assert(!"MeshVertex::get(): specified MeshVertex attribute is invalid.");
-	  out[0] = out[1] = out[2] = out[3] = 0;
-	  return 0;
   };
 
   // sets the specified attribute.

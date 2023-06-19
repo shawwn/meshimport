@@ -195,7 +195,7 @@ public:
 	  FILE *infile = fopen(filename, "rb");
 
 	  if(infile == NULL)
-		  return NULL;
+		  return false;
 
 	  fseek(infile, 0L, SEEK_END);
 	  NxI32 numbytes = ftell(infile);
@@ -204,7 +204,7 @@ public:
 	  mInputData = (char*)malloc((numbytes + 1) * sizeof(char));	
 
 	  if(mInputData == NULL)
-		  return NULL;
+		  return false;
 
 	  memset(mInputData, 0, (numbytes + 1) * sizeof(char));
 

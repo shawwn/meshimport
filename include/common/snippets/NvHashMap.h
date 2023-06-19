@@ -17,9 +17,9 @@
 // components in life support devices or systems without express written approval of
 // NVIDIA Corporation.
 //
-// Copyright © 2009 NVIDIA Corporation. All rights reserved.
-// Copyright © 2002-2008 AGEIA Technologies, Inc. All rights reserved.
-// Copyright © 2001-2006 NovodeX. All rights reserved.
+// Copyright ï¿½ 2009 NVIDIA Corporation. All rights reserved.
+// Copyright ï¿½ 2002-2008 AGEIA Technologies, Inc. All rights reserved.
+// Copyright ï¿½ 2001-2006 NovodeX. All rights reserved.
 
 #ifndef NV_HASH_MAP_H
 #define NV_HASH_MAP_H
@@ -28,9 +28,7 @@
 #include "NxUserAllocator.h"
 #include "NxAssert.h"
 #include "UserMemAlloc.h"
-#if (defined(NX_WINDOWS) | defined(NX_X360))
-#include <typeinfo.h>
-#endif
+#include <typeinfo>
 #include <new>
 #include <stdlib.h>
 //******************************************************
@@ -1214,7 +1212,7 @@ namespace NVSHARE
 		NxI32 imask		= ( (1<<(31-(exponent))))-1;											// mask for true integer values
 		NxI32 mantissa	= (a&((1<<23)-1));														// extract mantissa (without the hidden bit)
 		NxI32 r			= ((NxU32)(mantissa|(1<<23))<<8)>>(31-exponent);						// ((1<<exponent)*(mantissa|hidden bit))>>24 -- (we know that mantissa > (1<<24))
-		r = ((r & expsign) ^ (sign)) + ((!((mantissa<<8)&imask)&(expsign^((a-1)>>31)))&sign);	// if (fabs(value)<1.0) value = 0; copy sign; if (value < 0 && value==(int)(value)) value++;
+		r = ((r & expsign) ^ (sign)) + ((~((mantissa<<8)&imask)&(expsign^((a-1)>>31)))&sign);	// if (fabs(value)<1.0) value = 0; copy sign; if (value < 0 && value==(int)(value)) value++;
 		return r;
 	}
 
@@ -1228,7 +1226,7 @@ namespace NVSHARE
 		NxI32 imask		= ( (1<<(31-(exponent))))-1;											// mask for true integer values
 		NxI32 mantissa	= (a&((1<<23)-1));														// extract mantissa (without the hidden bit)
 		NxI32 r			= ((NxU32)(mantissa|(1<<23))<<8)>>(31-exponent);						// ((1<<exponent)*(mantissa|hidden bit))>>24 -- (we know that mantissa > (1<<24))
-		r = ((r & expsign) ^ (sign)) + ((!((mantissa<<8)&imask)&(expsign^((a-1)>>31)))&sign);	// if (fabs(value)<1.0) value = 0; copy sign; if (value < 0 && value==(int)(value)) value++;
+		r = ((r & expsign) ^ (sign)) + ((~((mantissa<<8)&imask)&(expsign^((a-1)>>31)))&sign);	// if (fabs(value)<1.0) value = 0; copy sign; if (value < 0 && value==(int)(value)) value++;
 		return -r;
 	}
 
@@ -1353,7 +1351,7 @@ namespace NVSHARE
 	to choose from.  I only looked at a billion or so.
 	--------------------------------------------------------------------
 	*/
-	NX_INLINE NxU32 hashMix(NxU32 &a, NxU32 &b, NxU32 &c)
+	NX_INLINE void hashMix(NxU32 &a, NxU32 &b, NxU32 &c)
 	{
 		a -= b; a -= c; a ^= (c>>13);
 		b -= c; b -= a; b ^= (a<<8);
@@ -1507,7 +1505,7 @@ namespace NVSHARE
 			NX_INLINE const Entry* find(const Key& k) const
 			{
 				if(!mHash.size())
-					return false;
+					return nullptr;
 
 				NxU32 h = hash(k);
 				NxU32 index = mHash[h];

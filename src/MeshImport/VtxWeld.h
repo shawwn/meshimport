@@ -1,6 +1,6 @@
 #ifndef VTX_WELD_H
 
-#define VFX_WELD_H
+#define VTX_WELD_H
 
 #include "UserMemAlloc.h"
 
@@ -91,6 +91,9 @@ private:
 	static Type mFind; // vertice to locate.
 	static VertexVector  *mList;
 };
+
+template <class Type> Type VertexLess<Type>::mFind;
+template <class Type> typename VertexLess<Type>::VertexVector* VertexLess<Type>::mList;
 
 template <class Type> class VertexPool
 {
