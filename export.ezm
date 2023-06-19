@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+  <MeshSystem asset_name="TestAsset" asset_info="TestAssetInfo" mesh_system_version="1" mesh_system_asset_version="0">
+       <MeshAABB min="0,0,0" max="1,1,0"/>
+    <Skeletons count="1">
+      <Skeleton name="TestSkeleton" count="1">
+        <Bone name="Bip01" orientation="0 0 0 1" position="0 0 0" scale="1 1 1"/>
+      </Skeleton>
+    </Skeletons>
+    <Animations count="1">
+      <Animation name="TestAnimation" trackcount="1" framecount="2" duration="0.033333335" dtime="0.016666668">
+        <AnimTrack name="Bip01" count="2" has_scale="true">
+      0 0 0   0 0 0 0   1 1 1,
+      0 0 0   0 0 0 0   1 1 1,
+        </AnimTrack>
+      </Animation>
+    </Animations>
+    <Materials count="1">
+      <Material name="TestMaterial" meta_data="TestMaterialInfo"/>
+    </Materials>
+    <Meshes count="1">
+      <Mesh name="TestMesh" skeleton="TestSkeleton" submesh_count="1">
+       <MeshAABB min="0,0,0" max="1,1,0"/>
+        <vertexbuffer count="3" ctype="fff fff x4 ff ff ff ff fff fff ffff hhhh fff" semantic="position normal color texcoord1 texcoord2 texcoord3 texcoord4 tangent binormal blendweights blendindices interp1">
+          0 0 0 0 1 0 FFFFFFFF 0 0 0 0 0 0 0 0 1 0 0 1 0 0 1 0 0 0 0 0 0 0 0 0 0 ,
+          1 0 0 0 1 0 FFFFFFFF 0 0 0 0 0 0 0 0 1 0 0 1 0 0 1 0 0 0 0 0 0 0 0 0 0 ,
+          1 1 0 0 1 0 FFFFFFFF 0 0 0 0 0 0 0 0 1 0 0 1 0 0 1 0 0 0 0 0 0 0 0 0 0 ,    
+        </vertexbuffer>
+      <MeshSection material="TestMaterial" ctype="fff fff x4 ff ff ff ff fff fff ffff hhhh fff" semantic="position normal color texcoord1 texcoord2 texcoord3 texcoord4 tangent binormal blendweights blendindices interp1">
+       <MeshAABB min="0,0,0" max="1,1,0"/>
+        <indexbuffer triangle_count="1">
+          0 1 2,  
+        </indexbuffer>
+      </MeshSection>
+      </Mesh>
+    </Meshes>
+  </MeshSystem>
