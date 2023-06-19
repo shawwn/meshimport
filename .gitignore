@@ -633,7 +633,7 @@ StyleCopReport.xml
 *_h.h
 *.ilk
 *.meta
-*.obj
+#*.obj
 *.iobj
 *.pch
 *.pdb
@@ -956,7 +956,7 @@ _deps
 *.slo
 *.lo
 *.o
-*.obj
+#*.obj
 
 # Precompiled Headers
 *.gch
@@ -992,7 +992,7 @@ _deps
 # Object files
 *.o
 *.ko
-*.obj
+#*.obj
 *.elf
 
 # Linker output
